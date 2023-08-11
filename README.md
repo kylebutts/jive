@@ -40,7 +40,7 @@ jive(
 #> [1] -0.02184514
 #> 
 #> $se
-#> [1] -0.007517231
+#> [1] -0.00751723
 #> 
 #> $F
 #> [1] 32.62642
@@ -60,19 +60,19 @@ jive(
 #> [1] 3.342377
 #> 
 #> $Sargan$pvalue
-#> [1] 0.7648087
+#> [1] 0.7648088
 #> 
 #> 
 #> $CD
 #> $CD$statistic
-#> [1] 3.31866
+#> [1] 3.318659
 #> 
 #> $CD$pvalue
-#> [1] 0.7679163
+#> [1] 0.7679164
 #> 
 #> 
 #> attr(,"class")
-#> [1] "UJIVE"    "jive_est"
+#> [1] "JIVE"     "jive_est"
 ```
 
 ``` r
@@ -144,14 +144,20 @@ he package will allow you to estimate (leave-out) leniency measures:
 Consider the following instrumental variables setup
 
 $$
-y_i = T_i \beta + W_i' \psi + \varepsilon_i,
-$$ where $T_i$ is a scalar endogenous variable, $W_i$ is a vector of
+  y_i = T_i \beta + W_i' \psi + \varepsilon_i,
+$$
+
+where $T_i$ is a scalar endogenous variable, $W_i$ is a vector of
 exogenous covariates, and $\varepsilon_i$ is an error term.
 Additionally, assume there is a set of valid instruments, $Z_i$. The
 intuition of two-stage least squares is to use the instruments to
-“predict” $T_i$: $$
-T_i = Z_i' \pi + W_i \gamma + \eta_i.
-$$ Then, the prediction, $\hat{T}_i$, is used in place of $T_i$ in the
+“predict” $T_i$:
+
+$$
+  T_i = Z_i' \pi + W_i \gamma + \eta_i.
+$$
+
+Then, the prediction, $\hat{T}_i$, is used in place of $T_i$ in the
 original regression.
 
 When the dimension of $Z_i$ grows with the number of observations,
@@ -162,9 +168,13 @@ Imbens, and Krueger (1999) developed the jackknife instrumental-variable
 estimator (JIVE). In short, for each $i$, $T_i$ is predicted using the
 first-stage equation leaving out $i$’s own observation.
 
-In general, the JIVE estimator (and variants) are given by $$
-\frac{\hat{P}' \tilde{Y}}{\hat{P}' \tilde{T}}
-$$ where $\hat{P}$ is a function of $W$ and $\hat{T}_i$. The particulars
+In general, the JIVE estimator (and variants) are given by
+
+$$
+  \frac{\hat{P}' \tilde{Y}}{\hat{P}' \tilde{T}}
+$$
+
+where $\hat{P}$ is a function of $W$ and $\hat{T}_i$. The particulars
 differ across the JIVE, the unbiased JIVE (UJIVE), the improved JIVE
 (IJIVE), and the cluster JIVE (CJIVE).
 
@@ -172,16 +182,18 @@ differ across the JIVE, the unbiased JIVE (UJIVE), the improved JIVE
 
 **Source:** Kolesar (2013) and Angrist, Imbens, and Kreuger (1999)
 
-The original JIVE estimate produces $\hat{T}$ given by $$
-\hat{T}_{\text{JIVE}} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T,
-$$ where $H_{(Z,W)}$ is the hat/projection matrix for $(Z,W)$ and
+The original JIVE estimate produces $\hat{T}$ given by
+
+$$
+  \hat{T}_{JIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T,
+$$
+
+where $H_{(Z,W)}$ is the hat/projection matrix for $(Z,W)$ and
 $D_{(Z,W)}$ is the diagonal matrix with the diagonal elements from
 $H_{Z, W}$.
 
 $$
-\begin{align*}
-\hat{P}_{\text{JIVE}} &= M_W \hat{T}_{\text{JIVE}}
-\end{align*}
+  \hat{P}_{JIVE} = M_W \hat{T}_{JIVE}
 $$
 
 ### UJIVE definition
@@ -189,9 +201,11 @@ $$
 **Source:** Kolesar (2013)
 
 $$
-\hat{T}_{\text{UJIVE}} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T = \hat{T}_{\text{JIVE}}
-$$ $$
-\hat{P}_{\text{UJIVE}} = \hat{T}_{\text{UJIVE}} - (I - D_{W})^{-1} (H_{W} - D_{W}) T
+  \hat{T}_{UJIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T = \hat{T}_{JIVE}
+$$
+
+$$
+  \hat{P}_{UJIVE} = \hat{T}_{UJIVE} - (I - D_{W})^{-1} (H_{W} - D_{W}) T
 $$
 
 ### IJIVE definition
@@ -200,9 +214,12 @@ $$
 
 Start residualizing $T$, $Y$, and $Z$ by the covariates $W$. The
 definition they give (assuming things have already been residualized) is
+
 $$
-\hat{T}_{IJIVE} = \hat{P}_{IJIVE} = (I - D_{\tilde{Z}})^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T}
-$$ Note that $P = T$ because you have already residualized by $W$.
+  \hat{T}_{IJIVE} = \hat{P}_{IJIVE} = (I - D_{\tilde{Z}})^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T}
+$$
+
+Note that $P = T$ because you have already residualized by $W$.
 
 ### CJIVE definition
 
@@ -214,8 +231,10 @@ clusters (e.g. court cases assigned on the same day to the same judge).
 The modified version is given by:
 
 $$
-\hat{T}_{CJIVE} = \hat{P}_{IJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
-$$ where $\mathbb{D}(P_Z, \{ n_1, \dots, n_G \})$ is a block-diagonal
+  \hat{T}_{CJIVE} = \hat{P}_{IJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
+$$
+
+where $\mathbb{D}(P_Z, \{ n_1, \dots, n_G \})$ is a block-diagonal
 matrix equal to the projection matrix of $Z$ zerod out except for each
 cluster.
 
@@ -226,9 +245,13 @@ in particular (free research idea).
 
 ### Standard errors
 
-Heteroskedastic-robust standard errors are given by $$ 
+Heteroskedastic-robust standard errors are given by
+
+$$ 
   \frac{\sqrt{\sum_i \hat{P}_i^2 \hat{\epsilon}_i^2}}{\sum_i \hat{P}_i T_i},
-$$ where $\hat{\epsilon}_i = M_W Y_i - M_W T_i * \hat{\beta}$. See
+$$
+
+where $\hat{\epsilon}_i = M_W Y_i - M_W T_i * \hat{\beta}$. See
 <https://github.com/kolesarm/ivreg/blob/master/ivreg.pdf> for
 derivations.
 
