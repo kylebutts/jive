@@ -36,7 +36,7 @@ library(jive)
 data(stevenson)
 ```
 
-First, we'll see the use of `jive` and `ujive`.
+### Juke n' JIVE
 
 ```{r}
 jive(
@@ -52,10 +52,23 @@ ujive(
 )
 ```
 
-Moreover, the package will allow you to estimate (leave-out) leniency measures: 
+TBD. I'm not sure if this syntax is better. The advantage is the syntax is a lot less verbose. I'm not sure if it could be confusing though.
+
+```{r, eval = FALSE}
+# This doesn't run at the moment
+jive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson, 
+)
+```
+
+
+### (Leave-out) Leniency Measures 
+he package will allow you to estimate (leave-out) leniency measures: 
 
 ```{r}
-# TBD
+# TODO :-) 
+# I have the function, just thinking of the API
 ```
 
 ## Econometric Details on JIVE, UJIVE, IJIVE, and CJIVE

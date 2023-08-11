@@ -29,7 +29,7 @@ library(jive)
 data(stevenson)
 ```
 
-First, we’ll see the use of `jive` and `ujive`.
+### Juke n’ JIVE
 
 ``` r
 jive(
@@ -40,7 +40,51 @@ jive(
 #> [1] -0.02184514
 #> 
 #> $se
-#> [1] -0.00751723
+#> [1] -0.007517231
+#> 
+#> $F
+#> [1] 32.62642
+#> 
+#> $Omega
+#>              [,1]         [,2]
+#> [1,]  0.243162932 -0.001992143
+#> [2,] -0.001992143  0.233459364
+#> 
+#> $Xi
+#>              [,1]         [,2]
+#> [1,] 1.099707e-06 2.453454e-05
+#> [2,] 2.453454e-05 1.556895e-04
+#> 
+#> $Sargan
+#> $Sargan$statistic
+#> [1] 3.342377
+#> 
+#> $Sargan$pvalue
+#> [1] 0.7648087
+#> 
+#> 
+#> $CD
+#> $CD$statistic
+#> [1] 3.31866
+#> 
+#> $CD$pvalue
+#> [1] 0.7679163
+#> 
+#> 
+#> attr(,"class")
+#> [1] "UJIVE"    "jive_est"
+```
+
+``` r
+ujive(
+  data = stevenson, y = ~ guilt, exogenous = ~ i(black) + i(white) | bailDate, 
+  endogenous = ~ jail3, instruments = ~ 0 | judge_pre
+)
+#> $beta
+#> [1] 0.1590913
+#> 
+#> $se
+#> [1] 0.07056371
 #> 
 #> $F
 #> [1] 32.62642
@@ -75,55 +119,24 @@ jive(
 #> [1] "UJIVE"    "jive_est"
 ```
 
+TBD. I’m not sure if this syntax is better. The advantage is the syntax
+is a lot less verbose. I’m not sure if it could be confusing though.
+
 ``` r
-ujive(
-  data = stevenson, y = ~ guilt, exogenous = ~ i(black) + i(white) | bailDate, 
-  endogenous = ~ jail3, instruments = ~ 0 | judge_pre
+# This doesn't run at the moment
+jive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson, 
 )
-#> $beta
-#> [1] 0.1590914
-#> 
-#> $se
-#> [1] 0.07056369
-#> 
-#> $F
-#> [1] 32.62642
-#> 
-#> $Omega
-#>              [,1]         [,2]
-#> [1,]  0.243162932 -0.001992143
-#> [2,] -0.001992143  0.233459364
-#> 
-#> $Xi
-#>              [,1]         [,2]
-#> [1,] 1.099707e-06 2.453454e-05
-#> [2,] 2.453454e-05 1.556895e-04
-#> 
-#> $Sargan
-#> $Sargan$statistic
-#> [1] 3.342377
-#> 
-#> $Sargan$pvalue
-#> [1] 0.7648088
-#> 
-#> 
-#> $CD
-#> $CD$statistic
-#> [1] 3.318659
-#> 
-#> $CD$pvalue
-#> [1] 0.7679164
-#> 
-#> 
-#> attr(,"class")
-#> [1] "UJIVE"    "jive_est"
 ```
 
-Moreover, the package will allow you to estimate (leave-out) leniency
-measures:
+### (Leave-out) Leniency Measures
+
+he package will allow you to estimate (leave-out) leniency measures:
 
 ``` r
-# TBD
+# TODO :-) 
+# I have the function, just thinking of the API
 ```
 
 ## Econometric Details on JIVE, UJIVE, IJIVE, and CJIVE
