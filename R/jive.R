@@ -126,6 +126,6 @@ jive <- function(
     beta = as.numeric(est), se = se,
     F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD
   )
-  class(out) <- c("UJIVE", "jive_est")
+  class(out) <- c("JIVE", "jive_est")
   return(out)
 }
