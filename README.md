@@ -40,7 +40,7 @@ jive(
 #> [1] -0.02184514
 #> 
 #> $se
-#> [1] -0.007517229
+#> [1] -0.00751723
 #> 
 #> $F
 #> [1] 32.62642
@@ -60,15 +60,15 @@ jive(
 #> [1] 3.342377
 #> 
 #> $Sargan$pvalue
-#> [1] 0.7648088
+#> [1] 0.7648087
 #> 
 #> 
 #> $CD
 #> $CD$statistic
-#> [1] 3.318659
+#> [1] 3.31866
 #> 
 #> $CD$pvalue
-#> [1] 0.7679164
+#> [1] 0.7679163
 #> 
 #> 
 #> attr(,"class")
@@ -101,7 +101,7 @@ ujive(
 #> 
 #> $Sargan
 #> $Sargan$statistic
-#> [1] 3.342377
+#> [1] 3.342378
 #> 
 #> $Sargan$pvalue
 #> [1] 0.7648087
@@ -231,7 +231,7 @@ clusters (e.g. court cases assigned on the same day to the same judge).
 The modified version is given by:
 
 $$
-  T_{CJIVE} = P_{IJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
+  T_{CJIVE} = P_{CJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
 $$
 
 where $\mathbb{D}(P_Z, \{ n_1, \dots, n_G \})$ is a block-diagonal

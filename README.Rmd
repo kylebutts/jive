@@ -141,7 +141,7 @@ Note that $P = T$ because you have already residualized by $W$.
 This is a modified version of IJIVE as proposed by Frandsen, Leslie, and McIntyre (2023). This is necessary if the errors are correlated within clusters (e.g. court cases assigned on the same day to the same judge). The modified version is given by:
 
 $$
-  T_{CJIVE} = P_{IJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
+  T_{CJIVE} = P_{CJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
 $$
 
 where $\mathbb{D}(P_Z, \{ n_1, \dots, n_G \})$ is a block-diagonal matrix equal to the projection matrix of $Z$ zerod out except for each cluster.
