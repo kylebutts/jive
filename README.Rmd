@@ -92,7 +92,7 @@ When the dimension of $Z_i$ grows with the number of observations, two-stage lea
 In general, the JIVE estimator (and variants) are given by
 
 $$
-  \frac{\hat{P}' \tilde{Y}}{\hat{P}' \tilde{T}}
+  \frac{\hat{P}' Y}{\hat{P}' T}
 $$
 
 where $\hat{P}$ is a function of $W$ and $\hat{T}_i$. The particulars differ across the JIVE, the unbiased JIVE (UJIVE), the improved JIVE (IJIVE), and the cluster JIVE (CJIVE). 
