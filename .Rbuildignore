@@ -3,6 +3,5 @@
 ^LICENSE\.md$
 ^README\.Rmd$
 ^R/manyiv.R$
-^R/ijive.R$
 ^literature/*$
 ^data-raw/*$

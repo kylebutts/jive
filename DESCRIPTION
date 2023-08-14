@@ -19,7 +19,8 @@ Depends:
 Imports: 
     fixest,
     dreamerr,
-    Matrix
+    Matrix,
+    stringmagic
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0)

@@ -1,9 +1,12 @@
-#' Estimate jackknife IV regression from Angrist, Imbens, and Krueger (1999)
+#' Estimate improved jackknife IV regression from Ackerberg and Devereux (2009)
 #' 
 #' @description 
-#' Estimate JIVE regression following Angrist, Imbens, and Krueger (1999). 
+#' Estimate the improved JIVE estimator from Ackerberg and Devereux (2009)
+#' or the clustered version from Frandsen, Leslie, and McIntyre (2023).
 #' Details can be found in 
-#' https://www.princeton.edu/~mkolesar/papers/late_estimation.pdf.
+#' https://direct.mit.edu/rest/article-abstract/91/2/351/57771/Improved-JIVE-Estimators-for-Overidentified-Linear 
+#' and 
+#' https://sites.google.com/view/emilycleslie/research?authuser=0.
 #' 
 #' @param data Data.frame
 #' @param formula Formula. following the syntax of the `fixest` package. In short, `y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs`.
@@ -24,7 +27,7 @@
 #' \item{n_covariates}{The number of non-collinear covariates included.}
 #' 
 #' @export
-jive <- function(
+ijive <- function(
   formula, data, cluster = NULL, ssc = FALSE
 ) { 
   
@@ -41,42 +44,50 @@ jive <- function(
   # Compute estimate -----------------------------------------------------------
 
   # TODO: No covariates !!
-  # TODO: Use only set of complete variables
-  # To make sure full set of NAs are removed
-  # if (is.null(est_ZW$obs_selection$obsRemoved)) {
-  #   obs_to_keep = 1:nrow(data)
-  # } else {
-  #   obs_to_keep = est_ZW$obs_selection$obsRemoved
-  # }
+  # TODO: Use only set of complete observations
+
   est_ZW = fixest::feols(
     fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~ .[fml_parts$W_lin] + .[fml_parts$Z_lin] | .[fml_parts$W_FE] + .[fml_parts$Z_FE]), 
     data = data
   )
-
-  Y = stats::model.matrix(est_ZW[[1]], "lhs", as.matrix = TRUE)
-  T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
-  n = est_ZW[[2]]$nobs
-  In = Matrix::Diagonal(n)
-  D_ZW = Matrix::Diagonal(n, stats::hatvalues(est_ZW[[2]]))
-  H_ZW_T = stats::predict(est_ZW[[2]])
-
-  # First-stage fitted values
-  That = Matrix::solve(In - D_ZW, H_ZW_T - (D_ZW %*% T))
-  data$That = as.numeric(That)
   est_W = fixest::feols(
-    fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml], That) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
+    fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
     data = data
   )
-  Phat = stats::resid(est_W[[3]])
-  data$That = NULL
 
+  # Y = stats::model.matrix(est_ZW[[1]], "lhs", as.matrix = TRUE)
+  # T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
+  Y_tilde = stats::resid(est_W[[1]])
+  T_tilde = stats::resid(est_W[[2]])
+  n = est_ZW[[2]]$nobs
+  In = Matrix::Diagonal(n)
+  
+  # From https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula
+  # H_{M_W Z} = H_{[W Z]} - H_{W}
+  D_ZW = Matrix::Diagonal(n, stats::hatvalues(est_ZW[[2]]))
+  D_W  = Matrix::Diagonal(n, stats::hatvalues(est_W[[2]]))
+  D_Ztilde = D_ZW - D_W
+  D_Ztilde_Ttilde = D_Ztilde %*% T_tilde
+
+  # https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula
+  # Trick: 
+  # H_{M_W Z} M_W T = (H_{[W Z]} - H_{W}) M_W T
+  #                 = H_{[W Z]} M_W T
+  #                 = H_{[W Z]} T - H_{[W Z]} H_W T
+  #                 = H_{[W Z]} T - H_W T
+  H_Ztilde_Ttilde = stats::predict(est_ZW[[2]]) - stats::predict(est_W[[2]])
+
+  # First-stage fitted values
+  Phat = Matrix::solve(In - D_ZW, H_Ztilde_Ttilde - D_Ztilde_Ttilde)
+  # That = Phat
+  
   # Compute estimate
-  est = Matrix::crossprod(Phat, Y) / Matrix::crossprod(Phat, T)
-
+  est = Matrix::crossprod(Phat, Y_tilde) / Matrix::crossprod(Phat, T_tilde)
 
   # Standard error -------------------------------------------------------------
+  # Y_tilde - T_tilde * \beta
   epsilon = stats::resid(est_W[[1]]) - stats::resid(est_W[[2]]) * as.numeric(est)
-  se = sqrt(sum(Phat^2 * epsilon^2)) / sum(Phat * T)
+  se = sqrt(sum(Phat^2 * epsilon^2)) / sum(Phat * T_tilde)
 
   # Small-sample correction
   L = est_W[[2]]$nparams 
@@ -131,6 +142,6 @@ jive <- function(
     clustered = !is.null(cluster), 
     n = n, n_instruments = K, n_covariates = L
   )
-  class(out) <- c("JIVE", "jive_est")
+  class(out) <- c("IJIVE", "jive_est")
   return(out)
 }

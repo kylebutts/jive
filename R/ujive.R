@@ -1,4 +1,4 @@
-#' Many IV regressions from Kolesár (2013)
+#' Estimate unbiased jackknife IV regression from Kolesár (2013)
 #' 
 #' @description 
 #' This routine is for a single endogenous regressor following Kolesár (2013). 
@@ -28,9 +28,16 @@
 #' 
 #' @export
 ujive <- function(
-  data, formula, cluster = NULL, ssc = FALSE
+  formula, data, cluster = NULL, ssc = FALSE
 ) { 
   
+  # `formula` comes first, but flip if needed
+  if (inherits(formula, "data.frame")) {
+    tmp = formula
+    formula = data
+    data = tmp
+  }
+
   check_args(data, formula, cluster, ssc)
   fml_parts = get_fml_parts(formula)
 
@@ -48,8 +55,8 @@ ujive <- function(
     data = data
   )
 
-  T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
   Y = stats::model.matrix(est_ZW[[1]], "lhs", as.matrix = TRUE)
+  T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
   n = est_ZW[[2]]$nobs
   In = Matrix::Diagonal(n)
   D_ZW = Matrix::Diagonal(n, stats::hatvalues(est_ZW[[2]]))

@@ -2,12 +2,28 @@
 % Please edit documentation in R/utils.R
 \name{get_fml_parts}
 \alias{get_fml_parts}
-\title{Break apart \code{fml_full} into formula:
-y ~ W | W_FE | T ~ Z | Z_FE}
+\title{Split formula into terms}
 \usage{
-get_fml_parts(fml_full)
+get_fml_parts(formula, parts_as_formula = FALSE)
+}
+\arguments{
+\item{formula}{Full formula following \code{fixest} syntax:
+\code{y ~ W | W_FE | T ~ Z | Z_FE}.}
+
+\item{parts_as_formula}{Logical. If \code{TRUE}, then each part will be a
+right-hand side formula. Default is \code{FALSE}}
+}
+\value{
+List of expressions/formula for each part of the formula. It will be of type \code{symbol}/\code{language} unless \code{parts_as_formula = TRUE}. Can be used with
+\code{fixest::xpd} and the dot bracket syntax to create formula. Any missing
+elements will be given a value of \code{NULL}. The list contains the following:
+\item{y_fml}{The LHS}
+\item{W_lin}{The linear part of the exogenous variables}
+\item{W_FE}{The fixed effects part of the exogenous variables}
+\item{T_fml}{The endogenous variable}
+\item{Z_lin}{The linear part of the instruments}
+\item{Z_FE}{The fixed effects part of the instruments}
 }
 \description{
-Break apart \code{fml_full} into formula:
-y ~ W | W_FE | T ~ Z | Z_FE
+Split formula into terms
 }

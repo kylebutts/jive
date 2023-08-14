@@ -2,14 +2,14 @@
 % Please edit documentation in R/ujive.R
 \name{ujive}
 \alias{ujive}
-\title{Many IV regressions from Kolesár (2013)}
+\title{Estimate unbiased jackknife IV regression from Kolesár (2013)}
 \usage{
-ujive(data, formula, cluster = NULL, ssc = FALSE)
+ujive(formula, data, cluster = NULL, ssc = FALSE)
 }
 \arguments{
-\item{data}{Data.frame}
-
 \item{formula}{Formula. following the syntax of the \code{fixest} package. In short, \code{y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs}.}
+
+\item{data}{Data.frame}
 
 \item{cluster}{Character or formula. The cluster variable. For non-clustered robust standard errors, set to NULL.}
 

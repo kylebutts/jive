@@ -33,8 +33,8 @@ data(stevenson)
 
 ``` r
 jive(
-  data = stevenson,
-  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson
 )
 #> Coefficients: 
 #>         Estimate  Robust SE Z value   Pr(>z)   
@@ -49,8 +49,8 @@ jive(
 
 ``` r
 ujive(
-  data = stevenson, 
-  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson
 )
 #> Coefficients: 
 #>       Estimate Robust SE Z value  Pr(>z)  
@@ -63,9 +63,25 @@ ujive(
 #>            CD: stat = 3.319, p = 0.768
 ```
 
+``` r
+ijive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson
+)
+#> Coefficients: 
+#>       Estimate Robust SE Z value  Pr(>z)  
+#> jail3 0.159529  0.070533  2.2618 0.02371 *
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 331,971 observations, 7 instruments, 2,352 covariates
+#> First-stage F: stat = 32.626
+#>        Sargan: stat = 3.342, p = 0.765
+#>            CD: stat = 3.319, p = 0.768
+```
+
 ### (Leave-out) Leniency Measures
 
-he package will allow you to estimate (leave-out) leniency measures:
+The package will allow you to estimate (leave-out) leniency measures:
 
 ``` r
 # TODO :-) 

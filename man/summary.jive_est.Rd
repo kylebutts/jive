@@ -4,10 +4,12 @@
 \alias{summary.jive_est}
 \title{A print method for \code{jive_est} objects}
 \usage{
-\method{summary}{jive_est}(x)
+\method{summary}{jive_est}(object, ...)
 }
 \arguments{
-\item{x}{A \code{jive_est} object from \code{jive}/\code{ujive}/\code{ijive}}
+\item{object}{A \code{jive_est} object from \code{jive}/\code{ujive}/\code{ijive}}
+
+\item{...}{Unused}
 }
 \description{
 A print method for \code{jive_est} objects

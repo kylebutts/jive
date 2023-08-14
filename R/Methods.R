@@ -1,9 +1,10 @@
 #' A print method for `jive_est` objects
 #'
 #' @param x A `jive_est` object from `jive`/`ujive`/`ijive`
+#' @param ... Unused
 #'
 #' @export
-print.jive_est <- function(x) {
+print.jive_est <- function(x, ...) {
   se_label = if (x$clustered) "Clustered SE" else "Robust SE"
   beta <- x$beta
   se <- x$se
@@ -38,10 +39,11 @@ print.jive_est <- function(x) {
 }
 
 #' A print method for `jive_est` objects
-#' @inheritParams print.jive_est
+#' @param object A `jive_est` object from `jive`/`ujive`/`ijive`
+#' @param ... Unused
 #' @export
-summary.jive_est <- function(x) {
-  print(x)
+summary.jive_est <- function(object, ...) {
+  print(object)
 }
 
 #' Extract coefficient from a `jive_est` object

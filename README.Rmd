@@ -40,15 +40,22 @@ data(stevenson)
 
 ```{r}
 jive(
-  data = stevenson,
-  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson
 )
 ```
 
 ```{r}
 ujive(
-  data = stevenson, 
-  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson
+)
+```
+
+```{r}
+ijive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson
 )
 ```
 

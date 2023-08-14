@@ -4,10 +4,12 @@
 \alias{print.jive_est}
 \title{A print method for \code{jive_est} objects}
 \usage{
-\method{print}{jive_est}(x)
+\method{print}{jive_est}(x, ...)
 }
 \arguments{
 \item{x}{A \code{jive_est} object from \code{jive}/\code{ujive}/\code{ijive}}
+
+\item{...}{Unused}
 }
 \description{
 A print method for \code{jive_est} objects
