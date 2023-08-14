@@ -12,32 +12,30 @@
 #' For just UJIVE, see the dedicated function `ujive`.
 #' 
 #' @param data Data.frame
-#' @param y Character or formula. The outcome variable.
-#' @param exogenous Formula. Outcome variable and exogenous control variables. Can include fixed effects in formula.
-#' @param endogenous Formula. The endogenous variable of interest.
-#' @param instruments Formula. Instruments for the endogenous variable. Can include fixed effects in formula.
+#' @param formula Formula. following the syntax of the `fixest` package. In short, `y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs`.
 #' @param cluster Character or formula. The cluster variable. For non-clustered robust standard errors, set to NULL.
-#' @param ssc Logical. Should a small sample adjustment be made?
+#' @param ssc Logical. Should a small sample adjustment be made? Default is `TRUE`.
 #' 
-#' @return An object of class `manyiv_est` that contains the results.
+#' @return An object of class `jive_est` that contains the results. It contains the following information:
+#' \item{beta}{Coefficient on the endogenous variable}
+#' \item{se}{Standard error for the coefficient on the endogenous variable}
+#' \item{F}{First-stage F statistic}
+#' \item{Omega}{Estimate of the covariance matrix of reduced-form errors}
+#' \item{Xi}{Estimate of the covariance matrix of the reduced form coefficients. See Kolesar (2012)}
+#' \item{Sargan}{Sargan (1958) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
+#' \item{CD}{Cragg and Donald (1993, 1997) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
+#' \item{clustered}{Logical variable indicating whether standard errors are clustered.}
+#' \item{n}{The number of observations used.}
+#' \item{n_instruments}{The number of non-collinear instruments included.}
+#' \item{n_covariates}{The number of non-collinear covariates included.}
 #' 
 #' @export
 jive <- function(
-  data, y, exogenous, endogenous, instruments,
-  cluster = NULL, ssc = FALSE
+  data, formula, cluster = NULL, ssc = FALSE
 ) { 
   
-  check_args(data, y, exogenous, endogenous, instruments, cluster, ssc)
-
-  # Process formula ------------------------------------------------------------
-  fixest::setFixest_fml(
-    ..y = y, 
-    ..W = exogenous,
-    ..T = endogenous, 
-    ..Z = instruments
-  )
-  fml_full = fixest::xpd(..y ~ ..W | ..T ~ ..Z)
-  fml_parts = get_fml_parts(fml_full)
+  check_args(data, formula, cluster, ssc)
+  fml_parts = get_fml_parts(formula)
 
   # Compute estimate -----------------------------------------------------------
 
@@ -50,7 +48,7 @@ jive <- function(
   #   obs_to_keep = est_ZW$obs_selection$obsRemoved
   # }
   est_ZW = fixest::feols(
-    fixest::xpd(c(..y, ..T) ~ .[fml_parts$W_lin] + .[fml_parts$Z_lin] | .[fml_parts$W_FE] + .[fml_parts$Z_FE]), 
+    fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~ .[fml_parts$W_lin] + .[fml_parts$Z_lin] | .[fml_parts$W_FE] + .[fml_parts$Z_FE]), 
     data = data
   )
 
@@ -65,7 +63,7 @@ jive <- function(
   That = Matrix::solve(In - D_ZW, H_ZW_T - (D_ZW %*% T))
   data$That = as.numeric(That)
   est_W = fixest::feols(
-    fixest::xpd(c(..y, ..T, That) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
+    fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml], That) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
     data = data
   )
   Phat = stats::resid(est_W[[3]])
@@ -122,9 +120,15 @@ jive <- function(
     )
   }
 
+  beta = as.numeric(est)
+  names(beta) <- all.vars(fml_parts$T_fml)[1]
+  names(se) = all.vars(fml_parts$T_fml)[1]
+
   out = list(
-    beta = as.numeric(est), se = se,
-    F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD
+    beta = beta, se = se,
+    F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD,
+    clustered = !is.null(cluster), 
+    n = n, n_instruments = K, n_covariates = L
   )
   class(out) <- c("JIVE", "jive_est")
   return(out)

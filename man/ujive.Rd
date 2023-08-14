@@ -4,25 +4,30 @@
 \alias{ujive}
 \title{Many IV regressions from Kolesár (2013)}
 \usage{
-ujive(data, y, exogenous, endogenous, instruments, cluster = NULL, ssc = FALSE)
+ujive(data, formula, cluster = NULL, ssc = FALSE)
 }
 \arguments{
 \item{data}{Data.frame}
 
-\item{y}{Character or formula. The outcome variable.}
-
-\item{exogenous}{Formula. Outcome variable and exogenous control variables. Can include fixed effects in formula.}
-
-\item{endogenous}{Formula. The endogenous variable of interest.}
-
-\item{instruments}{Formula. Instruments for the endogenous variable. Can include fixed effects in formula.}
+\item{formula}{Formula. following the syntax of the \code{fixest} package. In short, \code{y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs}.}
 
 \item{cluster}{Character or formula. The cluster variable. For non-clustered robust standard errors, set to NULL.}
 
-\item{ssc}{Logical. Should a small sample adjustment be made?}
+\item{ssc}{Logical. Should a small sample adjustment be made? Default is \code{TRUE}.}
 }
 \value{
-An object of class \code{manyiv_est} that contains the results.
+An object of class \code{jive_est} that contains the results. It contains the following information:
+\item{beta}{Coefficient on the endogenous variable}
+\item{se}{Standard error for the coefficient on the endogenous variable}
+\item{F}{First-stage F statistic}
+\item{Omega}{Estimate of the covariance matrix of reduced-form errors}
+\item{Xi}{Estimate of the covariance matrix of the reduced form coefficients. See Kolesar (2012)}
+\item{Sargan}{Sargan (1958) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
+\item{CD}{Cragg and Donald (1993, 1997) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
+\item{clustered}{Logical variable indicating whether standard errors are clustered.}
+\item{n}{The number of observations used.}
+\item{n_instruments}{The number of non-collinear instruments included.}
+\item{n_covariates}{The number of non-collinear covariates included.}
 }
 \description{
 This routine is for a single endogenous regressor following Kolesár (2013).

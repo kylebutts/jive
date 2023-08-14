@@ -28,6 +28,28 @@ rhs_fml_maker <- function(rhs) {
   return(res)
 }
 
+# Checks if formula is only rhs
+is_rhs_only = function(fml) {
+  # e.g. fml = ~ x
+  if (length(fml) == 2) {
+    return(TRUE)
+  }
+  # e.g. fml = ~ x | t ~ z
+  if (length(fml[[2]]) == 2) {
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
+# From fixest
+is_operator <- function(x, op) {
+  if (length(x) <= 1) {
+    return(FALSE) 
+  } else { 
+    return(x[[1]] == op)
+  }
+}
+
 #' Break apart `fml_full` into formula: 
 #' y ~ W | W_FE | T ~ Z | Z_FE  
 get_fml_parts <- function(fml_full) {
@@ -80,38 +102,16 @@ get_fml_parts <- function(fml_full) {
   return(res)
 }
 
-# merge rhs of formula
-merge_rhs_formula <- function(fml1, fml2) {
-  if (is.null(fml1)) fml1 = ~ 0
-  if (is.null(fml2)) fml2 = ~ 0
-	return(fixest::xpd(~ .[fml1] + .[fml2]))
-}
-
 # helper to check arguments from jive
 check_args <- function(
   data, y, exogenous, endogenous, instruments,
   cluster = NULL, ssc = FALSE
 ) { 
-
-  # I could do y + exogenous as one & endogenous + instruments as another,
-  # but I think that might mislead folks into thinking there are two regressions
-  # occuring
   # Check arguments ------------------------------------------------------------
   dreamerr::check_arg(data, "data.frame")
-  dreamerr::check_arg(y, "character var(data) | os formula var(data) right(1, 1)
-  ", .data = data)
+  dreamerr::check_arg(formula, "ts formula var(data)", .data = data)
   if (!is.null(cluster)) {
     dreamerr::check_arg(cluster, "character var(data) | os formula var(data) right(1, 1)", .data = data)
   }
-  dreamerr::check_arg(
-    endogenous,
-    "os formula var(data) right(1, 1)",
-    .data = data
-  )
-  dreamerr::check_arg(
-    exogenous, instruments, 
-    "os formula var(data) right(1, 2)",
-    .data = data
-  )
   dreamerr::check_arg(ssc, "logical scalar")
 }

@@ -40,31 +40,22 @@ data(stevenson)
 
 ```{r}
 jive(
-  data = stevenson, y = ~ guilt, exogenous = ~ i(black) + i(white) | bailDate, 
-  endogenous = ~ jail3, instruments = ~ 0 | judge_pre
+  data = stevenson,
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
 )
 ```
 
 ```{r}
 ujive(
-  data = stevenson, y = ~ guilt, exogenous = ~ i(black) + i(white) | bailDate, 
-  endogenous = ~ jail3, instruments = ~ 0 | judge_pre
-)
-```
-
-TBD. I'm not sure if this syntax is better. The advantage is the syntax is a lot less verbose. I'm not sure if it could be confusing though.
-
-```{r, eval = FALSE}
-# This doesn't run at the moment
-jive(
-  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson, 
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
 )
 ```
 
 
 ### (Leave-out) Leniency Measures 
-he package will allow you to estimate (leave-out) leniency measures: 
+
+The package will allow you to estimate (leave-out) leniency measures: 
 
 ```{r}
 # TODO :-) 

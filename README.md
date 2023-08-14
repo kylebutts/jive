@@ -33,101 +33,34 @@ data(stevenson)
 
 ``` r
 jive(
-  data = stevenson, y = ~ guilt, exogenous = ~ i(black) + i(white) | bailDate, 
-  endogenous = ~ jail3, instruments = ~ 0 | judge_pre
+  data = stevenson,
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
 )
-#> $beta
-#> [1] -0.02184514
-#> 
-#> $se
-#> [1] -0.00751723
-#> 
-#> $F
-#> [1] 32.62642
-#> 
-#> $Omega
-#>              [,1]         [,2]
-#> [1,]  0.243162932 -0.001992143
-#> [2,] -0.001992143  0.233459364
-#> 
-#> $Xi
-#>              [,1]         [,2]
-#> [1,] 1.099707e-06 2.453454e-05
-#> [2,] 2.453454e-05 1.556895e-04
-#> 
-#> $Sargan
-#> $Sargan$statistic
-#> [1] 3.342377
-#> 
-#> $Sargan$pvalue
-#> [1] 0.7648087
-#> 
-#> 
-#> $CD
-#> $CD$statistic
-#> [1] 3.31866
-#> 
-#> $CD$pvalue
-#> [1] 0.7679163
-#> 
-#> 
-#> attr(,"class")
-#> [1] "JIVE"     "jive_est"
+#> Coefficients: 
+#>         Estimate  Robust SE Z value   Pr(>z)   
+#> jail3 -0.0218451 -0.0075172   2.906 0.003661 **
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 331,971 observations, 7 instruments, 2,352 covariates
+#> First-stage F: stat = 32.626
+#>        Sargan: stat = 3.342, p = 0.765
+#>            CD: stat = 3.319, p = 0.768
 ```
 
 ``` r
 ujive(
-  data = stevenson, y = ~ guilt, exogenous = ~ i(black) + i(white) | bailDate, 
-  endogenous = ~ jail3, instruments = ~ 0 | judge_pre
-)
-#> $beta
-#> [1] 0.1590913
-#> 
-#> $se
-#> [1] 0.07056371
-#> 
-#> $F
-#> [1] 32.62642
-#> 
-#> $Omega
-#>              [,1]         [,2]
-#> [1,]  0.243162932 -0.001992143
-#> [2,] -0.001992143  0.233459364
-#> 
-#> $Xi
-#>              [,1]         [,2]
-#> [1,] 1.099707e-06 2.453454e-05
-#> [2,] 2.453454e-05 1.556895e-04
-#> 
-#> $Sargan
-#> $Sargan$statistic
-#> [1] 3.342378
-#> 
-#> $Sargan$pvalue
-#> [1] 0.7648087
-#> 
-#> 
-#> $CD
-#> $CD$statistic
-#> [1] 3.31866
-#> 
-#> $CD$pvalue
-#> [1] 0.7679163
-#> 
-#> 
-#> attr(,"class")
-#> [1] "UJIVE"    "jive_est"
-```
-
-TBD. I’m not sure if this syntax is better. The advantage is the syntax
-is a lot less verbose. I’m not sure if it could be confusing though.
-
-``` r
-# This doesn't run at the moment
-jive(
-  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson, 
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre
 )
+#> Coefficients: 
+#>       Estimate Robust SE Z value  Pr(>z)  
+#> jail3 0.159091  0.070564  2.2546 0.02416 *
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 331,971 observations, 7 instruments, 2,352 covariates
+#> First-stage F: stat = 32.626
+#>        Sargan: stat = 3.342, p = 0.765
+#>            CD: stat = 3.319, p = 0.768
 ```
 
 ### (Leave-out) Leniency Measures
