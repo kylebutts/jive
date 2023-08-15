@@ -22,6 +22,7 @@
 #' \item{Sargan}{Sargan (1958) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
 #' \item{CD}{Cragg and Donald (1993, 1997) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
 #' \item{clustered}{Logical variable indicating whether standard errors are clustered.}
+#' \item{n_clustered}{The number of clusters.}
 #' \item{n}{The number of observations used.}
 #' \item{n_instruments}{The number of non-collinear instruments included.}
 #' \item{n_covariates}{The number of non-collinear covariates included.}
@@ -40,6 +41,16 @@ ujive <- function(
 
   check_args(data, formula, cluster, ssc)
   fml_parts = get_fml_parts(formula)
+
+  if (!is.null(cluster)) {
+    if (inherits(cluster, "character")) {
+      cl = data[[cluster]]
+    } else {
+      cl = eval(cluster[[2]], data)
+    }
+    cl = as.numeric(as.factor(cl))
+  }
+
 
   # Compute estimate -----------------------------------------------------------
 
@@ -79,14 +90,29 @@ ujive <- function(
 
   # Standard error -------------------------------------------------------------
   epsilon = stats::resid(est_W[[1]]) - stats::resid(est_W[[2]]) * as.numeric(est)
-  se = sqrt(sum(Phat^2 * epsilon^2)) / sum(Phat * T)
+  
+  if (is.null(cluster)) {
+    se = sqrt(sum(Phat^2 * epsilon^2)) / sum(Phat * T)
+  } else {
+    se_cl = lapply(
+      split(1:length(cl), cl), 
+      function(cl_idx) {
+        sum((epsilon[cl_idx] * Phat[cl_idx])^2)
+      }
+    )
+    se = sqrt(Reduce("+", se_cl)) / sum(Phat * T)
+  }
 
   # Small-sample correction
   L = est_W[[2]]$nparams 
   K = est_ZW[[2]]$nparams - L
+  G = max(cl)
   if (ssc) {
-    # This matches ghpk-metrics/stata-manyiv but I'm not sure it's correct
-    se = sqrt(n / (n - L - 1)) * se
+    if (is.null(cluster)) {
+      se = sqrt(n / (n - L - 1)) * se
+    } else {
+      se = sqrt(((n - 1) / (n - L - 1)) * (G / (G - 1))) * se
+    }
   }
 
   # F-stat ---------------------------------------------------------------------
@@ -131,7 +157,7 @@ ujive <- function(
   out = list(
     beta = beta, se = se,
     F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD,
-    clustered = !is.null(cluster), 
+    clustered = !is.null(cluster), n_cluster = G,
     n = n, n_instruments = K, n_covariates = L
   )
   class(out) <- c("UJIVE", "jive_est")
