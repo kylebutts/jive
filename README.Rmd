@@ -164,6 +164,20 @@ Quoting from the papers that propose each:
 - IJIVE: "We introduce two simple new variants of the jackknife instrumental variables (JIVE) estimator for overidentified linear models and show that they are superior to the existing JIVE estimator, significantly improving on its small-sample-bias properties"
 - CJIVE: "In settings where inference must be clustered, however, the [IJIVE] fails to eliminate the many-instruments bias. We propose a cluster-jackknife approach in which first-stage predicted values for each observation are constructed from a regression that leaves out the observation's entire cluster, not just the observation itself. The cluster-jackknife instrumental variables estimator (CJIVE) eliminates many-instruments bias, and consistently estimates causal effects in the traditional linear model and local average treatment effects in the heterogeneous treatment effects framework."
 
+## Computation Efficiency
+
+This package uses a ton of algebra tricks to speed up the computation of the JIVE (and variants). First, the package is written using `fixest` which estiamtes high-dimensional fixed effects very quickly. All the credit to @lrberge for this. 
+
+All uses of the projection matrix, $H$, can be efficiently calculated using the fitted values of regressiones. The diagonal of the hat matrix needs to be calculated using $X_i (X'X)^{-1} X_i'$ which could be quite slow when there are high-dimensional fixed effects. However, we use sparse matrices and the following trick. Partition the covariates $W = [A, B]$ where $B$ are the fixed effects. Then the projection matrix can be decomposed as $P_W = P_B + P_{M_B A}$. $P_B$ is quick to calculate since it's a bunch of dummy variables. $P_{M_B A}$ is quick to calculate since you $M_B$ "sweeps out" the fixed effects and is a byproduct of `fixest` estimates.
+
+For IJIVE, another trick is used. Instead of actually residualizing everything, it's useful to use the original $Z$ for computational effiicency (e.g. if $Z$ is high-dimensional FEs). If we actually residualized the $Z$ fixed-effects, then we couldn't use `fixest` to estimate them. For this reason, we can use [block projection matrix decomposition](https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula) to transform the hat matrix into two components that are easier to calculate with `fixest` regressions:
+
+$$
+  H_{\tilde{Z}} = H_{M_W Z} = H_{[W Z]} - H_{W}.
+$$
+
+Then, through some algebra $H_{\tilde{Z}} M_W T$ can be written as $H_{[W Z]} T - H_W T$, i.e. the fitted values of the unresidualized $T$ from a regression on $W$ and $Z$ and from a regression on $W$. Likewise, $D_{\tilde{Z}}$ can be written as $D_{[W Z]} - D_W$.
+
 ## Sources
 
 [Ackerberg and Deverux (2009)](literature/Ackerberg_Deverux_2009.pdf)

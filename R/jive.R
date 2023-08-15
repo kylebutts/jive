@@ -57,7 +57,7 @@ jive <- function(
   T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
   n = est_ZW[[2]]$nobs
   In = Matrix::Diagonal(n)
-  D_ZW = Matrix::Diagonal(n, stats::hatvalues(est_ZW[[2]]))
+  D_ZW = block_diag_hatvalues(est_ZW[[2]])
   H_ZW_T = stats::predict(est_ZW[[2]])
 
   # First-stage fitted values

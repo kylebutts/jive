@@ -64,8 +64,8 @@ ijive <- function(
   
   # From https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula
   # H_{M_W Z} = H_{[W Z]} - H_{W}
-  D_ZW = Matrix::Diagonal(n, stats::hatvalues(est_ZW[[2]]))
-  D_W  = Matrix::Diagonal(n, stats::hatvalues(est_W[[2]]))
+  D_ZW = block_diag_hatvalues(est_ZW[[2]])
+  D_W  = block_diag_hatvalues(est_W[[2]])
   D_Ztilde = D_ZW - D_W
   D_Ztilde_Ttilde = D_Ztilde %*% T_tilde
 

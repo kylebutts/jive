@@ -59,7 +59,7 @@ ujive <- function(
   T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
   n = est_ZW[[2]]$nobs
   In = Matrix::Diagonal(n)
-  D_ZW = Matrix::Diagonal(n, stats::hatvalues(est_ZW[[2]]))
+  D_ZW = block_diag_hatvalues(est_ZW[[2]])
   H_ZW_T = stats::predict(est_ZW[[2]])
 
   # First-stage fitted values
@@ -69,7 +69,7 @@ ujive <- function(
     fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
     data = data
   )
-  D_W = Matrix::Diagonal(n, stats::hatvalues(est_W[[2]]))
+  D_W = block_diag_hatvalues(est_W[[2]])
   H_W_T = stats::predict(est_W[[2]])
 
   Phat = That - Matrix::solve(In - D_W,  H_W_T - (D_W %*% T))
