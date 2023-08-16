@@ -79,6 +79,25 @@ ijive(
 #>            CD: stat = 3.319, p = 0.768
 ```
 
+``` r
+# Leave-cluster out
+ijive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson,
+  cluster = ~ bailDate, 
+  lo_cluster = TRUE # Default, but just to be explicit
+)
+#> Coefficients: 
+#>       Estimate Clustered SE Z value  Pr(>z)  
+#> jail3 0.174195     0.073551  2.3684 0.01787 *
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 331,971 observations, 7 instruments, 2,352 covariates
+#> First-stage F: stat = 32.626
+#>        Sargan: stat = 3.342, p = 0.765
+#>            CD: stat = 3.319, p = 0.768
+```
+
 ### (Leave-out) Leniency Measures
 
 The package will allow you to estimate (leave-out) leniency measures:

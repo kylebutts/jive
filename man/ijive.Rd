@@ -4,7 +4,13 @@
 \alias{ijive}
 \title{Estimate improved jackknife IV regression from Ackerberg and Devereux (2009)}
 \usage{
-ijive(formula, data, cluster = NULL, ssc = FALSE)
+ijive(
+  formula,
+  data,
+  cluster = NULL,
+  ssc = FALSE,
+  lo_cluster = !is.null(cluster)
+)
 }
 \arguments{
 \item{formula}{Formula. following the syntax of the \code{fixest} package. In short, \code{y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs}.}
@@ -14,6 +20,8 @@ ijive(formula, data, cluster = NULL, ssc = FALSE)
 \item{cluster}{Character or formula. The cluster variable. For non-clustered robust standard errors, set to NULL.}
 
 \item{ssc}{Logical. Should a small sample adjustment be made? Default is \code{TRUE}.}
+
+\item{lo_cluster}{Logical. Should leave-out cluster be used for estimation? Default is \code{TRUE} if \code{cluster} is not NULL.}
 }
 \value{
 An object of class \code{jive_est} that contains the results. It contains the following information:
@@ -25,6 +33,7 @@ An object of class \code{jive_est} that contains the results. It contains the fo
 \item{Sargan}{Sargan (1958) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
 \item{CD}{Cragg and Donald (1993, 1997) test for overidentifying restrictions. This is an empty list if only a single instrument is used.}
 \item{clustered}{Logical variable indicating whether standard errors are clustered.}
+\item{n_clustered}{The number of clusters.}
 \item{n}{The number of observations used.}
 \item{n_instruments}{The number of non-collinear instruments included.}
 \item{n_covariates}{The number of non-collinear covariates included.}

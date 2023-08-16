@@ -1,7 +1,7 @@
 #' Block Diagonal Hat Matrix
 #' 
 #' Calculates the block diagonal hat matrix for a fixest model where the blocks 
-#' correspond to clusters (cl[i] == cl[j]) otherwise the (i,j) element is 
+#' correspond to clusters (cl_i == cl_j) otherwise the (i,j) element is 
 #' zeroed out. Note the data doesn't have to be sorted for this.
 #' 
 #' @param model A `fixest` model object.
@@ -62,7 +62,7 @@ block_diag_hatvalues <- function(model, cl = NULL) {
   }
 
   if (!is.null(model$fixef_vars)) {
-    f <- model.matrix(model, type = "fixef")
+    f <- stats::model.matrix(model, type = "fixef")
     f <- subset(f, select = model$fixef_vars)
 
     # Matrix of fixed effects times weights
@@ -75,7 +75,7 @@ block_diag_hatvalues <- function(model, cl = NULL) {
     }
     if (is.null(model$onlyFixef) & method == "feglm") {
       mats$rhs <- fixest::demean(
-        model.matrix(model, "rhs"),
+        stats::model.matrix(model, "rhs"),
         f,
         weights = weights
       )
@@ -120,7 +120,7 @@ block_diag_hatvalues <- function(model, cl = NULL) {
         P_cl <- Matrix::crossprod(Z_cl)
 
         # Extract those elements into the larger P matrix col and row indices
-        trip <- as(P_cl, "TsparseMatrix")
+        trip <- methods::as(P_cl, "TsparseMatrix")
         Matrix::sparseMatrix(
           i = cl_idx[trip@i + 1],
           j = cl_idx[trip@j + 1],
@@ -151,7 +151,7 @@ block_diag_hatvalues <- function(model, cl = NULL) {
         P_cl <- Matrix::t(tSl_cl) %*% Matrix::solve(tSlSl, tSl_cl)
 
         # Extract those elements into the larger P matrix col and row indices
-        trip <- as(P_cl, "TsparseMatrix")
+        trip <- methods::as(P_cl, "TsparseMatrix")
         Matrix::sparseMatrix(
           i = cl_idx[trip@i + 1],
           j = cl_idx[trip@j + 1],
@@ -181,7 +181,7 @@ block_diag_hatvalues <- function(model, cl = NULL) {
         P_cl <- Matrix::t(tX_cl) %*% tXXinv %*% tX_cl
 
         # Extract those elements into the larger P matrix col and row indices
-        trip <- as(P_cl, "TsparseMatrix")
+        trip <- methods::as(P_cl, "TsparseMatrix")
         Matrix::sparseMatrix(
           i = cl_idx[trip@i + 1],
           j = cl_idx[trip@j + 1],
@@ -200,7 +200,7 @@ block_diag_hatvalues <- function(model, cl = NULL) {
 
   P <- Reduce("+", P_list)
   # For efficient operations, mark this (correctly) as a sparse matrix
-  if (!is.null(cl)) P <- as(P, "dsCMatrix")
+  if (!is.null(cl)) P <- methods::as(P, "symmetricMatrix")
   
   return(P)
 }

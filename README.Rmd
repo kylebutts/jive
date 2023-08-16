@@ -38,24 +38,34 @@ data(stevenson)
 
 ### Juke n' JIVE
 
-```{r}
+```{r jive-example}
 jive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson
 )
 ```
 
-```{r}
+```{r ujive-example}
 ujive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson
 )
 ```
 
-```{r}
+```{r ijive-example}
 ijive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson
+)
+```
+
+```{r cjive-example}
+# Leave-cluster out
+ijive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson,
+  cluster = ~ bailDate, 
+  lo_cluster = TRUE # Default, but just to be explicit
 )
 ```
 

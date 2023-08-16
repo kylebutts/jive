@@ -46,18 +46,17 @@ summary.jive_est <- function(object, ...) {
   print(object)
 }
 
-#' Extract coefficient from a `jive_est` object
-#' @inheritParams print.jive_est
-#' @export
-coef.jive_est <- function(x) {
-  return(x$beta)
-}
+# #' Extract coefficient from a `jive_est` object
+# #' @inheritParams summary.jive_est
+# #' @export
+# coef.jive_est <- function(object, ...) {
+#   return(object$beta)
+# }
 
-#' Extract standard error from a `jive_est` object
-#' @inheritParams print.jive_est
-#' @export
-se.jive_est <- function(x) {
-  return(x$se)
-}
-
+# #' Extract standard error from a `jive_est` object
+# #' @inheritParams summary.jive_est
+# #' @export
+# se.jive_est <- function(object, ...) {
+#   return(object$se)
+# }
 

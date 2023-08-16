@@ -1,7 +1,10 @@
+library(fixest)
+library(Matrix)
+
 test_that("Covariates", {
   model <- feols(mpg ~ hp + wt, mtcars)
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
-  P <- (X %*% solve(crossprod(X), t(X)))
+  P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model, cl = mtcars$cyl)
   
   expect_equal(
@@ -13,7 +16,7 @@ test_that("Covariates", {
 test_that("Covariates & FEs", {
   model <- feols(mpg ~ hp | cyl, mtcars)
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
-  P <- (X %*% solve(crossprod(X), t(X)))
+  P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model, cl = mtcars$cyl)
   
   expect_equal(
@@ -25,7 +28,7 @@ test_that("Covariates & FEs", {
 test_that("Covariates, FEs, & slope vars", {
   model <- feols(mpg ~ wt | cyl[hp], mtcars)
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
-  P <- (X %*% solve(crossprod(X), t(X)))
+  P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model, cl = mtcars$cyl)
   
   expect_equal(
@@ -37,16 +40,16 @@ test_that("Covariates, FEs, & slope vars", {
 test_that("cl = NULL gives D matrix", {
   model <- feols(mpg ~ wt | cyl[hp], mtcars)
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
-  P <- (X %*% solve(crossprod(X), t(X)))
+  P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model)
   
   expect_equal(
-    Matrix::Diagonal(nrow(P_block), diag(P_block)), 
+    Matrix::Diagonal(nrow(P_block), Matrix::diag(P_block)), 
     P_block
   )
   expect_equal(
-    diag(P_block),
-    diag(P)
+    Matrix::diag(P_block),
+    Matrix::diag(P)
   )
 })
 

@@ -29,7 +29,7 @@
 #' 
 #' @export
 ujive <- function(
-  formula, data, cluster = NULL, ssc = FALSE
+  formula, data, cluster = NULL, ssc = FALSE, lo_cluster = FALSE
 ) { 
   
   # `formula` comes first, but flip if needed
@@ -70,8 +70,12 @@ ujive <- function(
   T = stats::model.matrix(est_ZW[[2]], "lhs", as.matrix = TRUE)
   n = est_ZW[[2]]$nobs
   In = Matrix::Diagonal(n)
-  D_ZW = block_diag_hatvalues(est_ZW[[2]])
   H_ZW_T = stats::predict(est_ZW[[2]])
+  if (lo_cluster == TRUE) { 
+    D_ZW = block_diag_hatvalues(est_ZW[[2]], cl)
+  } else {
+    D_ZW = block_diag_hatvalues(est_ZW[[2]])
+  }
 
   # First-stage fitted values
   That = Matrix::solve(In - D_ZW, H_ZW_T - (D_ZW %*% T))
@@ -80,8 +84,12 @@ ujive <- function(
     fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
     data = data
   )
-  D_W = block_diag_hatvalues(est_W[[2]])
   H_W_T = stats::predict(est_W[[2]])
+  if (lo_cluster == TRUE) { 
+    D_W = block_diag_hatvalues(est_W[[2]], cl)
+  } else {
+    D_W = block_diag_hatvalues(est_W[[2]])
+  }
 
   Phat = That - Matrix::solve(In - D_W,  H_W_T - (D_W %*% T))
 
@@ -106,7 +114,7 @@ ujive <- function(
   # Small-sample correction
   L = est_W[[2]]$nparams 
   K = est_ZW[[2]]$nparams - L
-  G = max(cl)
+  if (!is.null(cluster)) G = max(cl)
   if (ssc) {
     if (is.null(cluster)) {
       se = sqrt(n / (n - L - 1)) * se
@@ -153,13 +161,13 @@ ujive <- function(
   beta = as.numeric(est)
   names(beta) <- all.vars(fml_parts$T_fml)[1]
   names(se) = all.vars(fml_parts$T_fml)[1]
-
   out = list(
     beta = beta, se = se,
     F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD,
-    clustered = !is.null(cluster), n_cluster = G,
+    clustered = !is.null(cluster),
     n = n, n_instruments = K, n_covariates = L
   )
+  if (!is.null(cluster)) out$n_cluster = G
   class(out) <- c("UJIVE", "jive_est")
   return(out)
 }

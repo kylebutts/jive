@@ -20,7 +20,8 @@ Imports:
     fixest,
     dreamerr,
     Matrix,
-    stringmagic
+    stringmagic,
+    methods
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0)

@@ -1,5 +1,5 @@
 #' Estimate improved jackknife IV regression from Ackerberg and Devereux (2009)
-#' 
+#'
 #' @description 
 #' Estimate the improved JIVE estimator from Ackerberg and Devereux (2009)
 #' or the clustered version from Frandsen, Leslie, and McIntyre (2023).
@@ -8,10 +8,7 @@
 #' and 
 #' https://sites.google.com/view/emilycleslie/research?authuser=0.
 #' 
-#' @param data Data.frame
-#' @param formula Formula. following the syntax of the `fixest` package. In short, `y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs`.
-#' @param cluster Character or formula. The cluster variable. For non-clustered robust standard errors, set to NULL.
-#' @param ssc Logical. Should a small sample adjustment be made? Default is `TRUE`.
+#' @inheritParams jive
 #' 
 #' @return An object of class `jive_est` that contains the results. It contains the following information:
 #' \item{beta}{Coefficient on the endogenous variable}
@@ -72,13 +69,6 @@ ijive <- function(
   n = est_ZW[[2]]$nobs
   In = Matrix::Diagonal(n)
   
-  # From https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula
-  # H_{M_W Z} = H_{[W Z]} - H_{W}
-  D_ZW = block_diag_hatvalues(est_ZW[[2]])
-  D_W  = block_diag_hatvalues(est_W[[2]])
-  D_Ztilde = D_ZW - D_W
-  D_Ztilde_Ttilde = D_Ztilde %*% T_tilde
-
   # https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula
   # Trick: 
   # H_{M_W Z} M_W T = (H_{[W Z]} - H_{W}) M_W T
@@ -87,9 +77,30 @@ ijive <- function(
   #                 = H_{[W Z]} T - H_W T
   H_Ztilde_Ttilde = stats::predict(est_ZW[[2]]) - stats::predict(est_W[[2]])
 
-  # First-stage fitted values
-  Phat = Matrix::solve(In - D_ZW, H_Ztilde_Ttilde - D_Ztilde_Ttilde)
-  # That = Phat
+  # From https://en.wikipedia.org/wiki/Projection_matrix#Blockwise_formula
+  # D_{M_W Z} = D_{[W Z]} - D_{W}
+  if (lo_cluster == TRUE) {
+    # D_Ztilde * Ttilde = D_{[W Z]} Ttilde - D_{W} Ttilde
+    D_Ztilde_Ttilde = 
+      mult_DX_T(est_ZW[[2]], T_tilde, cl) -
+      mult_DX_T(est_W[[2]], T_tilde, cl)
+
+    # Calculate (I - D_{ZW})^{-1} block by block and multiply by H_ZW_T - D_ZW_T
+    Phat = solve_ImDX1pDX2_T(
+      est_ZW[[2]], est_W[[2]], H_Ztilde_Ttilde - D_Ztilde_Ttilde, cl
+    )
+    # That = Phat
+
+  } else {
+    D_ZW = block_diag_hatvalues(est_ZW[[2]])
+    D_W  = block_diag_hatvalues(est_W[[2]])
+    D_Ztilde = D_ZW - D_W
+    D_Ztilde_Ttilde = D_Ztilde %*% T_tilde
+    
+    # First-stage fitted values
+    Phat = Matrix::solve(In - D_ZW, H_Ztilde_Ttilde - D_Ztilde_Ttilde)
+    # That = Phat
+  }
   
   # Compute estimate
   est = Matrix::crossprod(Phat, Y_tilde) / Matrix::crossprod(Phat, T_tilde)
@@ -113,7 +124,7 @@ ijive <- function(
   # Small-sample correction
   L = est_W[[2]]$nparams 
   K = est_ZW[[2]]$nparams - L
-  G = max(cl)
+  if (!is.null(cluster)) G = max(cl)
   if (ssc) {
     if (is.null(cluster)) {
       se = sqrt(n / (n - L - 1)) * se
@@ -160,13 +171,13 @@ ijive <- function(
   beta = as.numeric(est)
   names(beta) <- all.vars(fml_parts$T_fml)[1]
   names(se) = all.vars(fml_parts$T_fml)[1]
-
   out = list(
     beta = beta, se = se,
     F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD,
-    clustered = !is.null(cluster), n_cluster = G,
+    clustered = !is.null(cluster),
     n = n, n_instruments = K, n_covariates = L
   )
+  if (!is.null(cluster)) out$n_cluster = G
   class(out) <- c("IJIVE", "jive_est")
   return(out)
 }
