@@ -125,8 +125,8 @@ $$
   T_i = Z_i' \pi + W_i \gamma + \eta_i.
 $$
 
-Then, the prediction, $T_i$, is used in place of $T_i$ in the original
-regression.
+Then, the prediction, $\hat{T}\_i$, is used in place of $T_i$ in the
+original regression.
 
 When the dimension of $Z_i$ grows with the number of observations,
 two-stage least squares is biased (Kolesar, 2013). Without getting into
@@ -139,12 +139,12 @@ first-stage equation leaving out $i$’s own observation.
 In general, the JIVE estimator (and variants) are given by
 
 $$
-  \frac{P' Y}{P' T}
+  \frac{\hat{P}' Y}{\hat{P}' T}
 $$
 
-where $P$ is a function of $W$ and $T_i$. The particulars differ across
-the JIVE, the unbiased JIVE (UJIVE), the improved JIVE (IJIVE), and the
-cluster JIVE (CJIVE).
+where $\hat{P}$ is a function of $W$, $T$, and $Z$. The particulars
+differ across the JIVE, the unbiased JIVE (UJIVE), the improved JIVE
+(IJIVE), and the cluster JIVE (CJIVE).
 
 ### JIVE definition
 
@@ -153,15 +153,15 @@ cluster JIVE (CJIVE).
 The original JIVE estimate produces $T$ given by
 
 $$
-  T_{JIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T,
+  \hat{T}\_{JIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T,
 $$
 
 where $H_{(Z,W)}$ is the hat/projection matrix for $(Z,W)$ and
-$D_{(Z,W)}$ is the diagonal matrix with the diagonal elements from
-$H_{Z, W}$.
+$D_{(Z,W)}$ is the diagonal matrix with diagonal elements corresponding
+to $H_{(Z,W)}$.
 
 $$
-  P_{JIVE} = M_W T_{JIVE}
+  \hat{P}\_{JIVE} = M_W \hat{T}\_{JIVE}
 $$
 
 ### UJIVE definition
@@ -169,11 +169,11 @@ $$
 **Source:** Kolesar (2013)
 
 $$
-  T_{UJIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T = T_{JIVE}
+  \hat{T}\_{UJIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T = \hat{T}\_{JIVE}
 $$
 
 $$
-  P_{UJIVE} = T_{UJIVE} - (I - D_{W})^{-1} (H_{W} - D_{W}) T
+  \hat{P}\_{UJIVE} = \hat{T}\_{UJIVE} - (I - D_{W})^{-1} (H_{W} - D_{W}) T
 $$
 
 ### IJIVE definition
@@ -184,10 +184,11 @@ Start residualizing $T$, $Y$, and $Z$ by the covariates $W$. The
 definition they give (assuming things have already been residualized) is
 
 $$
-  T_{IJIVE} = P_{IJIVE} = (I - D_{\tilde{Z}})^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T}
+  \hat{T}\_{IJIVE} = \hat{P}\_{IJIVE} = (I - D_{\tilde{Z}})^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T}
 $$
 
-Note that $P = T$ because you have already residualized by $W$.
+Note that $\hat{P}\_{IJIVE} = \hat{T}\_{IJIVE}$ because you have already
+residualized by $W$.
 
 ### CJIVE definition
 
@@ -199,7 +200,7 @@ clusters (e.g. court cases assigned on the same day to the same judge).
 The modified version is given by:
 
 $$
-  T_{CJIVE} = P_{CJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T},
+  \hat{T}\_{CJIVE} = \hat{P}\_{CJIVE} = (I - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \}))^{-1} (H_{\tilde{Z}} - \mathbb{D}(P_Z, \{ n_1, \dots, n_G \})) \tilde{T},
 $$
 
 where $\mathbb{D}(P_Z, \{ n_1, \dots, n_G \})$ is a block-diagonal
@@ -216,7 +217,7 @@ in particular (free research idea).
 Heteroskedastic-robust standard errors are given by
 
 $$ 
-  \frac{\sqrt{\sum_i P_i^2 \hat{\epsilon}_i^2}}{\sum_i P_i T_i},
+  \frac{\sqrt{\sum_i \hat{P}\_i^2 \hat{\epsilon}_i^2}}{\sum_i \hat{P}\_i T_i},
 $$
 
 where $\hat{\epsilon}_i = M_W Y_i - M_W T_i * \hat{\beta}$. See
