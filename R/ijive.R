@@ -9,6 +9,7 @@
 #' https://sites.google.com/view/emilycleslie/research?authuser=0.
 #' 
 #' @inheritParams jive
+#' @param return_leniency Logical. Should the leave-out fitted value from the first-stage be returned? Default is `FALSE`.
 #' 
 #' @return An object of class `jive_est` that contains the results. It contains the following information:
 #' \item{beta}{Coefficient on the endogenous variable}
@@ -23,10 +24,11 @@
 #' \item{n}{The number of observations used.}
 #' \item{n_instruments}{The number of non-collinear instruments included.}
 #' \item{n_covariates}{The number of non-collinear covariates included.}
+#' \item{That}{Leave-out fitted value from the first-stage. This is the fitted values of M_W * T on M_W * Z. Only returned if `return_leniency` is `TRUE`.}
 #' 
 #' @export
 ijive <- function(
-  formula, data, cluster = NULL, ssc = FALSE, lo_cluster = !is.null(cluster)
+  formula, data, cluster = NULL, ssc = FALSE, lo_cluster = !is.null(cluster), return_leniency = FALSE
 ) { 
   
   # `formula` comes first, but flip if needed
@@ -178,6 +180,7 @@ ijive <- function(
     n = n, n_instruments = K, n_covariates = L
   )
   if (!is.null(cluster)) out$n_cluster = G
+  if (return_leniency) out$That = as.numeric(Phat)
   class(out) <- c("IJIVE", "jive_est")
   return(out)
 }

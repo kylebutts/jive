@@ -103,9 +103,47 @@ ijive(
 The package will allow you to estimate (leave-out) leniency measures:
 
 ``` r
-# TODO :-) 
-# I have the function, just thinking of the API
+out = ijive(
+  guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
+  data = stevenson, return_leniency = TRUE
+)
+stevenson$judge_lo_leniency = out$That
+hist(stevenson$judge_lo_leniency)
 ```
+
+<img src="man/figures/README-estimate-leniency-1.png" width="100%" />
+
+``` r
+library(binsreg)
+# filter out outliers
+stevenson = subset(stevenson, judge_lo_leniency > -0.02 & judge_lo_leniency < 0.02)
+binsreg::binsreg(
+  y = stevenson$jail3, x = stevenson$judge_lo_leniency, 
+  cb = TRUE
+)
+#> Warning in binsreg::binsreg(y = stevenson$jail3, x =
+#> stevenson$judge_lo_leniency, : To speed up computation, bin/degree selection
+#> uses a subsample of roughly max(5,000, 0.01n) observations if the sample size
+#> n>5,000. To use the full sample, set randcut=1.
+#> [1] "Note: A large number of random draws/evaluation points is recommended to obtain the final results."
+```
+
+<img src="man/figures/README-binsreg-jail3-leniency-1.png" width="100%" />
+
+    #> Call: binsreg
+    #> 
+    #> Binscatter Plot
+    #> Bin/Degree selection method (binsmethod)  =  IMSE direct plug-in (select # of bins)
+    #> Placement (binspos)                       =  Quantile-spaced
+    #> Derivative (deriv)                        =  0
+    #> 
+    #> Group (by)                         =  Full Sample
+    #> Sample size (n)                    =  297226
+    #> # of distinct values (Ndist)       =  34888
+    #> # of clusters (Nclust)             =  NA
+    #> dots, degree (p)                   =  0
+    #> dots, smoothness (s)               =  0
+    #> # of bins (nbins)                  =  34
 
 ## Econometric Details on JIVE, UJIVE, IJIVE, and CJIVE
 
@@ -150,7 +188,8 @@ differ across the JIVE, the unbiased JIVE (UJIVE), the improved JIVE
 
 **Source:** Kolesar (2013) and Angrist, Imbens, and Kreuger (1999)
 
-The original JIVE estimate produces $T$ given by
+The original JIVE estimate produces $\hat{T}$ via a leave-out procedure,
+which can be expressed in matrix notation as:
 
 $$
   \hat{T}\_{JIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T,
@@ -158,7 +197,8 @@ $$
 
 where $H_{(Z,W)}$ is the hat/projection matrix for $(Z,W)$ and
 $D_{(Z,W)}$ is the diagonal matrix with diagonal elements corresponding
-to $H_{(Z,W)}$.
+to $H_{(Z,W)}$. Then, after partialling out covariates in the
+second-stage, we have
 
 $$
   \hat{P}\_{JIVE} = M_W \hat{T}\_{JIVE}
@@ -167,6 +207,10 @@ $$
 ### UJIVE definition
 
 **Source:** Kolesar (2013)
+
+For UJIVE, a leave-out procedure is used in the first-stage for fitted
+values $\hat{T}$ and in the second stage for residualizing the
+covariates. The terms are given by:
 
 $$
   \hat{T}\_{UJIVE} = (I - D_{(Z,W)})^{-1} (H_{(Z,W)} - D_{(Z,W)}) T = \hat{T}\_{JIVE}
@@ -180,15 +224,18 @@ $$
 
 **Source:** Ackerberg and Devereux (2009)
 
-Start residualizing $T$, $Y$, and $Z$ by the covariates $W$. The
-definition they give (assuming things have already been residualized) is
+The IJIVE procedure, first residualizes $T$, $Y$, and $Z$ by the
+covariates $W$. The authors show that this reduces small-sample bias.
+Then, the standard leave-out JIVE procedure is carried out on the
+residualized matrices (denoted by \$):
 
 $$
   \hat{T}\_{IJIVE} = \hat{P}\_{IJIVE} = (I - D_{\tilde{Z}})^{-1} (H_{\tilde{Z}} - D_{\tilde{Z}}) \tilde{T}
 $$
 
-Note that $\hat{P}\_{IJIVE} = \hat{T}\_{IJIVE}$ because you have already
-residualized by $W$.
+Note that $\hat{P}\_{IJIVE} = \hat{T}\_{IJIVE}$ because the
+residualization has already occured and doesn’t need to occur in the
+second stage.
 
 ### CJIVE definition
 
