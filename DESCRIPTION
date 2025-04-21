@@ -2,27 +2,26 @@ Package: jive
 Title: Jackknife Instrumental Variables Estimation
 Version: 0.0.0.9000
 Authors@R: 
-    c(
-      person(
-        "Kyle", "Butts", role = c("aut","cre"),
-        email = "kyle.butts@colorado.edu",
-        comment = c(ORCID = "0000-0002-9048-8059")
-      )
+  c(
+    person(
+      "Kyle", "Butts", role = c("aut","cre"),
+      email = "buttskyle96@gmail.com",
+      comment = c(ORCID = "0000-0002-9048-8059")
     )
+  )
 Description: Implements JIVE/UJIVE procedures as a wrapper around `fixest::feols`.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3.9000
+RoxygenNote: 7.3.2
 Depends: 
-    R (>= 2.10)
+  R (>= 3.5.0),
+  fixest (>= 0.12.1)
 Imports: 
-    fixest,
-    dreamerr,
-    Matrix,
-    stringmagic,
-    methods
+  dreamerr,
+  Matrix,
+  stringmagic
 LazyData: true
 Suggests: 
-    testthat (>= 3.0.0)
+  testthat (>= 3.0.0)
 Config/testthat/edition: 3

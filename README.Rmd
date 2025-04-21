@@ -25,7 +25,13 @@ The goal of jive is to implement jackknife instrumental-variable estimators (JIV
 You can install the development version of jive like so:
 
 ``` r
-devtools::install_github("kylebutts/jive") 
+remotes::install_github("kylebutts/jive") 
+```
+
+This package requires `sparse_model_matrix` from the dev version of `fixest`.
+You can install that via
+``` r
+remotes::install_github("lrberge/fixest")
 ```
 
 ## Example Usage
@@ -59,12 +65,13 @@ ijive(
 )
 ```
 
-```{r cjive-example, cache = TRUE}
+```{r cjive-example}
+#| cache: true
 # Leave-cluster out
 ijive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson,
-  cluster = ~ bailDate, 
+  cluster = ~bailDate,
   lo_cluster = TRUE # Default, but just to be explicit
 )
 ```
@@ -74,24 +81,115 @@ ijive(
 
 The package will allow you to estimate (leave-out) leniency measures: 
 
-```{r estimate-leniency, dpi = 300}
+```{r estimate-leniency}
+#| dpi: 200
 out = ijive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
-  data = stevenson, return_leniency = TRUE
+  data = stevenson,
+  return_leniency = TRUE
 )
 stevenson$judge_lo_leniency = out$That
-hist(stevenson$judge_lo_leniency)
+hist(stevenson$judge_lo_leniency, breaks = 30, xlab = "Judge leave-one-out leniency", main = NULL)
 ```
 
-```{r binsreg-jail3-leniency, dpi = 300}
-library(binsreg)
-# filter out outliers
-stevenson = subset(stevenson, judge_lo_leniency > -0.02 & judge_lo_leniency < 0.02)
-binsreg::binsreg(
-  y = stevenson$jail3, x = stevenson$judge_lo_leniency, 
-  cb = TRUE
-)
+```{r 'plot reduced form and first stage'}
+#| dpi: 200
+library(tidyverse)
+
+judge_summary <- stevenson |>
+  summarize(
+    .by = judge_pre,
+    judge_leniency = mean(judge_lo_leniency),
+    prop_jail3 = mean(jail3),
+    prop_guilt = mean(guilt),
+  )
+
+# First-stage plot
+ggplot(judge_summary, aes(x = judge_leniency, y = prop_jail3)) +
+  geom_point() +
+  # using `lm` because we have so few judges in our dataset
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "ribbon",
+    color = "#e64173",
+    fill = NA,
+    linetype = "dashed",
+    linewidth = 1.25
+  ) +
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "line",
+    color = "#e64173",
+    linewidth = 1.25
+  ) +
+  labs(title = "First-stage", x =  "Judge leniency", y = "Judge pre-trial detention rate") +
+  theme_bw()
+
+# Reduced-form plot
+ggplot(judge_summary, aes(x = judge_leniency, y = prop_guilt)) +
+  geom_point() +
+  # using `lm` because we have so few judges in our dataset
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "ribbon",
+    color = "#e64173",
+    fill = NA,
+    linetype = "dashed",
+    linewidth = 1.25
+  ) +
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "line",
+    color = "#e64173",
+    linewidth = 1.25
+  ) +
+  labs(title = "Reduced Form", x =  "Judge leniency", y = "Judge guilty verdict rate") +
+  theme_bw()
 ```
+
+```{r}
+#| dpi: 200
+library(tidyverse)
+library(fixest)
+# Take residuals from first-stage but add back in judge fixed effects
+# This is what Dobbie, Goldin, and Yang do in Figure 1
+est_fs <- feols(
+  jail3 ~ 0 + i(black) + i(white) | judge_pre + bailDate,
+  data = stevenson
+)
+stevenson$resid <- resid(est_fs) +
+  predict(est_fs, fixef = TRUE)[, "judge_pre"]
+
+# First-stage plot
+ggplot(stevenson, aes(x = judge_lo_leniency, y = resid)) +
+  stat_smooth(
+    geom = "ribbon",
+    method = "lm",
+    formula = y ~ x,
+    color = "#e64173",
+    fill = NA,
+    linetype = "dashed",
+    linewidth = 1.25
+  ) +
+  stat_smooth(
+    geom = "line",
+    method = "lm",
+    formula = y ~ x,
+    color = "#e64173",
+    linewidth = 1.25
+  ) +
+  labs(
+    title = "First-stage",
+    y = "Residualized rate of pretrial release",
+    x = "Judge Leniency (Leave-out measure)"
+  ) +
+  theme_bw()
+```
+
 
 ## Econometric Details on JIVE, UJIVE, IJIVE, and CJIVE
 

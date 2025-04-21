@@ -4,6 +4,7 @@
 ## \[🚧 WIP 🚧\] `jive`
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 The goal of jive is to implement jackknife instrumental-variable
@@ -14,7 +15,14 @@ estimators (JIVE) and various alternatives.
 You can install the development version of jive like so:
 
 ``` r
-devtools::install_github("kylebutts/jive") 
+remotes::install_github("kylebutts/jive") 
+```
+
+This package requires `sparse_model_matrix` from the dev version of
+`fixest`. You can install that via
+
+``` r
+remotes::install_github("lrberge/fixest")
 ```
 
 ## Example Usage
@@ -26,6 +34,7 @@ whether or not a defendant subsequently pleads guilty.
 
 ``` r
 library(jive)
+#> Loading required package: fixest
 data(stevenson)
 ```
 
@@ -38,11 +47,11 @@ jive(
 )
 #> Coefficients: 
 #>         Estimate  Robust SE Z value   Pr(>z)   
-#> jail3 -0.0218451 -0.0075172   2.906 0.003661 **
+#> jail3 -0.0218460 -0.0075176   2.906 0.003661 **
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 331,971 observations, 7 instruments, 2,352 covariates
-#> First-stage F: stat = 32.626
+#> First-stage F: stat = 32.627
 #>        Sargan: stat = 3.342, p = 0.765
 #>            CD: stat = 3.319, p = 0.768
 ```
@@ -54,11 +63,11 @@ ujive(
 )
 #> Coefficients: 
 #>       Estimate Robust SE Z value  Pr(>z)  
-#> jail3 0.159091  0.070564  2.2546 0.02416 *
+#> jail3 0.159077  0.070567  2.2543 0.02418 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 331,971 observations, 7 instruments, 2,352 covariates
-#> First-stage F: stat = 32.626
+#> First-stage F: stat = 32.627
 #>        Sargan: stat = 3.342, p = 0.765
 #>            CD: stat = 3.319, p = 0.768
 ```
@@ -70,11 +79,11 @@ ijive(
 )
 #> Coefficients: 
 #>       Estimate Robust SE Z value  Pr(>z)  
-#> jail3 0.159529  0.070533  2.2618 0.02371 *
+#> jail3 0.159527  0.070533  2.2617 0.02371 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 331,971 observations, 7 instruments, 2,352 covariates
-#> First-stage F: stat = 32.626
+#> First-stage F: stat = 32.627
 #>        Sargan: stat = 3.342, p = 0.765
 #>            CD: stat = 3.319, p = 0.768
 ```
@@ -84,16 +93,16 @@ ijive(
 ijive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
   data = stevenson,
-  cluster = ~ bailDate, 
+  cluster = ~bailDate,
   lo_cluster = TRUE # Default, but just to be explicit
 )
 #> Coefficients: 
 #>       Estimate Clustered SE Z value  Pr(>z)  
-#> jail3 0.174195     0.073551  2.3684 0.01787 *
+#> jail3 0.174206     0.073553  2.3685 0.01786 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 331,971 observations, 7 instruments, 2,352 covariates
-#> First-stage F: stat = 32.626
+#> First-stage F: stat = 32.627
 #>        Sargan: stat = 3.342, p = 0.765
 #>            CD: stat = 3.319, p = 0.768
 ```
@@ -105,45 +114,129 @@ The package will allow you to estimate (leave-out) leniency measures:
 ``` r
 out = ijive(
   guilt ~ i(black) + i(white) | bailDate | jail3 ~ 0 | judge_pre,
-  data = stevenson, return_leniency = TRUE
+  data = stevenson,
+  return_leniency = TRUE
 )
 stevenson$judge_lo_leniency = out$That
-hist(stevenson$judge_lo_leniency)
+hist(stevenson$judge_lo_leniency, breaks = 30, xlab = "Judge leave-one-out leniency", main = NULL)
 ```
 
 <img src="man/figures/README-estimate-leniency-1.png" width="100%" />
 
 ``` r
-library(binsreg)
-# filter out outliers
-stevenson = subset(stevenson, judge_lo_leniency > -0.02 & judge_lo_leniency < 0.02)
-binsreg::binsreg(
-  y = stevenson$jail3, x = stevenson$judge_lo_leniency, 
-  cb = TRUE
-)
-#> Warning in binsreg::binsreg(y = stevenson$jail3, x =
-#> stevenson$judge_lo_leniency, : To speed up computation, bin/degree selection
-#> uses a subsample of roughly max(5,000, 0.01n) observations if the sample size
-#> n>5,000. To use the full sample, set randcut=1.
-#> [1] "Note: A large number of random draws/evaluation points is recommended to obtain the final results."
+library(tidyverse)
+#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+#> ✔ dplyr     1.1.4          ✔ readr     2.1.5     
+#> ✔ forcats   1.0.0          ✔ stringr   1.5.1     
+#> ✔ ggplot2   3.5.2.9000     ✔ tibble    3.2.1     
+#> ✔ lubridate 1.9.4          ✔ tidyr     1.3.1     
+#> ✔ purrr     1.0.4          
+#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+#> ✖ dplyr::filter() masks stats::filter()
+#> ✖ dplyr::lag()    masks stats::lag()
+#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+judge_summary <- stevenson |>
+  summarize(
+    .by = judge_pre,
+    judge_leniency = mean(judge_lo_leniency),
+    prop_jail3 = mean(jail3),
+    prop_guilt = mean(guilt),
+  )
+
+# First-stage plot
+ggplot(judge_summary, aes(x = judge_leniency, y = prop_jail3)) +
+  geom_point() +
+  # using `lm` because we have so few judges in our dataset
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "ribbon",
+    color = "#e64173",
+    fill = NA,
+    linetype = "dashed",
+    linewidth = 1.25
+  ) +
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "line",
+    color = "#e64173",
+    linewidth = 1.25
+  ) +
+  labs(title = "First-stage", x =  "Judge leniency", y = "Judge pre-trial detention rate") +
+  theme_bw()
 ```
 
-<img src="man/figures/README-binsreg-jail3-leniency-1.png" width="100%" />
+<img src="man/figures/README-plot reduced form and first stage-1.png" width="100%" />
 
-    #> Call: binsreg
-    #> 
-    #> Binscatter Plot
-    #> Bin/Degree selection method (binsmethod)  =  IMSE direct plug-in (select # of bins)
-    #> Placement (binspos)                       =  Quantile-spaced
-    #> Derivative (deriv)                        =  0
-    #> 
-    #> Group (by)                         =  Full Sample
-    #> Sample size (n)                    =  297226
-    #> # of distinct values (Ndist)       =  34888
-    #> # of clusters (Nclust)             =  NA
-    #> dots, degree (p)                   =  0
-    #> dots, smoothness (s)               =  0
-    #> # of bins (nbins)                  =  34
+``` r
+
+# Reduced-form plot
+ggplot(judge_summary, aes(x = judge_leniency, y = prop_guilt)) +
+  geom_point() +
+  # using `lm` because we have so few judges in our dataset
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "ribbon",
+    color = "#e64173",
+    fill = NA,
+    linetype = "dashed",
+    linewidth = 1.25
+  ) +
+  stat_smooth(
+    formula = y ~ x,
+    method = "lm",
+    geom = "line",
+    color = "#e64173",
+    linewidth = 1.25
+  ) +
+  labs(title = "Reduced Form", x =  "Judge leniency", y = "Judge guilty verdict rate") +
+  theme_bw()
+```
+
+<img src="man/figures/README-plot reduced form and first stage-2.png" width="100%" />
+
+``` r
+library(tidyverse)
+library(fixest)
+# Take residuals from first-stage but add back in judge fixed effects
+# This is what Dobbie, Goldin, and Yang do in Figure 1
+est_fs <- feols(
+  jail3 ~ 0 + i(black) + i(white) | judge_pre + bailDate,
+  data = stevenson
+)
+stevenson$resid <- resid(est_fs) +
+  predict(est_fs, fixef = TRUE)[, "judge_pre"]
+
+# First-stage plot
+ggplot(stevenson, aes(x = judge_lo_leniency, y = resid)) +
+  stat_smooth(
+    geom = "ribbon",
+    method = "lm",
+    formula = y ~ x,
+    color = "#e64173",
+    fill = NA,
+    linetype = "dashed",
+    linewidth = 1.25
+  ) +
+  stat_smooth(
+    geom = "line",
+    method = "lm",
+    formula = y ~ x,
+    color = "#e64173",
+    linewidth = 1.25
+  ) +
+  labs(
+    title = "First-stage",
+    y = "Residualized rate of pretrial release",
+    x = "Judge Leniency (Leave-out measure)"
+  ) +
+  theme_bw()
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
 ## Econometric Details on JIVE, UJIVE, IJIVE, and CJIVE
 
