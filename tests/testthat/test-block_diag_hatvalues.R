@@ -6,7 +6,7 @@ test_that("Covariates", {
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model, cl = mtcars$cyl)
-  
+
   expect_equal(
     as.matrix(P_block[mtcars$cyl == 6, mtcars$cyl == 6]),
     as.matrix(P[mtcars$cyl == 6, mtcars$cyl == 6])
@@ -18,7 +18,7 @@ test_that("Covariates & FEs", {
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model, cl = mtcars$cyl)
-  
+
   expect_equal(
     as.matrix(P_block[mtcars$cyl == 6, mtcars$cyl == 6]),
     as.matrix(P[mtcars$cyl == 6, mtcars$cyl == 6])
@@ -30,7 +30,7 @@ test_that("Covariates, FEs, & slope vars", {
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model, cl = mtcars$cyl)
-  
+
   expect_equal(
     as.matrix(P_block[mtcars$cyl == 6, mtcars$cyl == 6]),
     as.matrix(P[mtcars$cyl == 6, mtcars$cyl == 6])
@@ -42,9 +42,9 @@ test_that("cl = NULL gives D matrix", {
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   P_block <- block_diag_hatvalues(model)
-  
+
   expect_equal(
-    Matrix::Diagonal(nrow(P_block), Matrix::diag(P_block)), 
+    Matrix::Diagonal(nrow(P_block), Matrix::diag(P_block)),
     P_block
   )
   expect_equal(
@@ -52,4 +52,3 @@ test_that("cl = NULL gives D matrix", {
     Matrix::diag(P)
   )
 })
-

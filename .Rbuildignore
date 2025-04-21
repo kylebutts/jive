@@ -5,3 +5,4 @@
 ^R/manyiv.R$
 ^literature/*$
 ^data-raw/*$
+^README_cache/*$

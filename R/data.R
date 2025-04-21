@@ -1,6 +1,6 @@
 #' Judge data from Stevenson (2018)
 #'
-#' This dataset is from Stevenson (2018). The dataset consists of individual court cases that are quasi-randomly assigned to 8 judges (magistrates) in Philadelphia. The data contains information on pretrial detention and several outcomes, including whether or not a defendant subsequently pleads guilty. 
+#' This dataset is from Stevenson (2018). The dataset consists of individual court cases that are quasi-randomly assigned to 8 judges (magistrates) in Philadelphia. The data contains information on pretrial detention and several outcomes, including whether or not a defendant subsequently pleads guilty.
 #'
 #' @format ## `stevenson`
 #' A data frame with 331,971 rows and 50 columns:

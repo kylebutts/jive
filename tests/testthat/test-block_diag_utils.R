@@ -98,7 +98,7 @@ test_that("mult_DX_T works with Covariates & FEs", {
 test_that("solve_ImDX_T works with Covariates", {
   model <- feols(mpg ~ hp + wt, mtcars)
   T <- mtcars$drat
-  
+
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   D <- Matrix::Diagonal(nrow(P), Matrix::diag(P))
@@ -133,7 +133,7 @@ test_that("solve_ImDX_T works with Covariates", {
 test_that("solve_ImDX_T works with Covariates & FEs", {
   model <- feols(mpg ~ hp + wt | cyl, mtcars)
   T <- mtcars$drat
-  
+
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   ImD <- Matrix::Diagonal(nrow(P)) - Matrix::Diagonal(nrow(P), Matrix::diag(P))
@@ -167,7 +167,7 @@ test_that("solve_ImDX_T works with Covariates & FEs", {
 test_that("solve_ImDX_T works with Covariates & FEs & Slope FEs", {
   model <- feols(mpg ~ wt | cyl[hp], mtcars)
   T <- mtcars$drat
-  
+
   X <- sparse_model_matrix(model, c("rhs", "fixef"))
   P <- (X %*% Matrix::solve(Matrix::crossprod(X), Matrix::t(X)))
   ImD <- Matrix::Diagonal(nrow(P)) - Matrix::Diagonal(nrow(P), Matrix::diag(P))
@@ -202,7 +202,7 @@ test_that("solve_ImDX1mDX2_T works", {
   model1 <- feols(mpg ~ hp + wt | cyl, mtcars)
   model2 <- feols(mpg ~ 0 + hp + wt, mtcars)
   T <- mtcars$drat
-  
+
   X1 <- sparse_model_matrix(model1, c("rhs", "fixef"))
   X2 <- sparse_model_matrix(model2, c("rhs", "fixef"))
   P1 <- (X1 %*% Matrix::solve(Matrix::crossprod(X1), Matrix::t(X1)))
@@ -210,16 +210,17 @@ test_that("solve_ImDX1mDX2_T works", {
   I <- Matrix::Diagonal(nrow(P2))
   M2 <- I - P2
   MX2_Z <- (M2 %*% X1)[, 3:5]
-  P_MX2_Z <- (MX2_Z %*% Matrix::solve(Matrix::crossprod(MX2_Z), Matrix::t(MX2_Z)))
+  P_MX2_Z <- (MX2_Z %*%
+    Matrix::solve(Matrix::crossprod(MX2_Z), Matrix::t(MX2_Z)))
   # Block decomposition of projection matrix check
   expect_equal(
     (P1 - P2),
     P_MX2_Z
   )
-  
+
   D1 <- Matrix::Diagonal(nrow(P1), Matrix::diag(P1))
   D2 <- Matrix::Diagonal(nrow(P2), Matrix::diag(P2))
-  ImDX1pDX2_manual <- Matrix::solve(I - (D1 - D2), T) 
+  ImDX1pDX2_manual <- Matrix::solve(I - (D1 - D2), T)
   ImDX1pDX2 <- solve_ImDX1pDX2_T(model1, model2, T)
   expect_equal(
     as.numeric(ImDX1pDX2_manual),
@@ -244,4 +245,3 @@ test_that("solve_ImDX1mDX2_T works", {
     as.numeric(ImDX1pDX2)
   )
 })
-

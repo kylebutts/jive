@@ -1,11 +1,11 @@
 #' Split formula into terms
-#' 
+#'
 #' @param formula Full formula following `fixest` syntax:
 #' `y ~ W | W_FE | T ~ Z | Z_FE`.
-#' @param parts_as_formula Logical. If `TRUE`, then each part will be a 
+#' @param parts_as_formula Logical. If `TRUE`, then each part will be a
 #' right-hand side formula. Default is `FALSE`
-#' 
-#' @return List of expressions/formula for each part of the formula. It will be of type `symbol`/`language` unless `parts_as_formula = TRUE`. Can be used with 
+#'
+#' @return List of expressions/formula for each part of the formula. It will be of type `symbol`/`language` unless `parts_as_formula = TRUE`. Can be used with
 #' `fixest::xpd` and the dot bracket syntax to create formula. Any missing
 #' elements will be given a value of `NULL`. The list contains the following:
 #' \item{y_fml}{The LHS}
@@ -14,14 +14,19 @@
 #' \item{T_fml}{The endogenous variable}
 #' \item{Z_lin}{The linear part of the instruments}
 #' \item{Z_FE}{The fixed effects part of the instruments}
-#' 
+#'
 #' @export
 get_fml_parts <- function(formula, parts_as_formula = FALSE) {
   has_lhs <- !is_rhs_only(formula)
   fml_split_tilde <- fml_breaker(formula, "~")
 
   res <- list(
-    y_fml = NULL, W_lin = NULL, W_FE = NULL, T_fml = NULL, Z_lin = NULL, Z_FE = NULL
+    y_fml = NULL,
+    W_lin = NULL,
+    W_FE = NULL,
+    T_fml = NULL,
+    Z_lin = NULL,
+    Z_FE = NULL
   )
 
   # LHS
@@ -123,14 +128,20 @@ is_operator <- function(x, op) {
 
 # helper to check arguments from jive
 check_args <- function(
-    data, formula,
-    cluster = NULL, ssc = FALSE) {
+  data,
+  formula,
+  cluster = NULL,
+  ssc = FALSE
+) {
   # Check arguments ------------------------------------------------------------
   dreamerr::check_arg(data, "data.frame")
   dreamerr::check_arg(formula, "ts formula var(data)", .data = data)
   if (!is.null(cluster)) {
-    dreamerr::check_arg(cluster, "character var(data) | os formula var(data) right(1, 1)", .data = data)
+    dreamerr::check_arg(
+      cluster,
+      "character var(data) | os formula var(data) right(1, 1)",
+      .data = data
+    )
   }
   dreamerr::check_arg(ssc, "logical scalar")
 }
-

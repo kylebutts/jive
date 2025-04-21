@@ -1,38 +1,49 @@
 #' Many IV regressions from Kolesár (2013)
-#' 
-#' @description 
-#' This routine is for a single endogenous regressor following Kolesár (2013). 
-#' The function produces a set of estimates using: OLS, two-stage least squares 
-#' estimator (TSLS), the limited information maximum likelihood (LIML), 
+#'
+#' @description
+#' This routine is for a single endogenous regressor following Kolesár (2013).
+#' The function produces a set of estimates using: OLS, two-stage least squares
+#' estimator (TSLS), the limited information maximum likelihood (LIML),
 #' the modified bias-correct 2SLS estimator (MB2SLS), the jackknife IV
-#' estimator (JIVE), the unbiased jackknife IV estimator (UJIVE), and the 
-#' reverse two-stage least squares estimator (RTSLS). Details can be found in 
+#' estimator (JIVE), the unbiased jackknife IV estimator (UJIVE), and the
+#' reverse two-stage least squares estimator (RTSLS). Details can be found in
 #' https://www.princeton.edu/~mkolesar/papers/late_estimation.pdf.
-#' 
+#'
 #' For just UJIVE, see the dedicated function `ujive`.
-#' 
+#'
 #' @inheritParams jive
-#' 
+#'
 #' @return An object of class `manyiv_est` that contains the results.
-#' 
+#'
 #' @export
 manyiv <- function(
-  data, y, exogenous, endogenous, instruments,
-  cluster = NULL, ssc = FALSE
-) { 
+  data,
+  y,
+  exogenous,
+  endogenous,
+  instruments,
+  cluster = NULL,
+  ssc = FALSE
+) {
   # I could do y + exogenous as one & endogenous + instruments as another,
   # but I think that might mislead folks into thinking there are two regressions
   # occuring
   # Check arguments ------------------------------------------------------------
   dreamerr::check_arg(data, "data.frame")
-  dreamerr::check_arg(y, cluster, "character var(data) | os formula var(data) right(1, 1)", .data = data)
+  dreamerr::check_arg(
+    y,
+    cluster,
+    "character var(data) | os formula var(data) right(1, 1)",
+    .data = data
+  )
   dreamerr::check_arg(
     endogenous,
     "os formula var(data) right(1, 1)",
     .data = data
   )
   dreamerr::check_arg(
-    exogenous, instruments, 
+    exogenous,
+    instruments,
     "os formula var(data) right(1, 2)",
     .data = data
   )
@@ -40,9 +51,9 @@ manyiv <- function(
 
   # Get model matrices ---------------------------------------------------------
   fixest::setFixest_fml(
-    ..y = y, 
+    ..y = y,
     ..W = exogenous,
-    ..T = endogenous, 
+    ..T = endogenous,
     ..Z = instruments
   )
 
@@ -51,18 +62,30 @@ manyiv <- function(
   fml_parts = get_fml_parts(fml_full)
 
   exo = fixest::feols(
-    fixest::xpd(..y ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
+    fixest::xpd(..y ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]),
     data = data
   )
   endo = fixest::feols(
-    fixest::xpd(..T ~ .[fml_parts$Z_lin] | .[fml_parts$W_FE] + .[fml_parts$Z_FE]), 
+    fixest::xpd(
+      ..T ~ .[fml_parts$Z_lin] | .[fml_parts$W_FE] + .[fml_parts$Z_FE]
+    ),
     data = data
   )
 
   # y, W, and FE
-  exo_smm = sparse_model_matrix(exo, data = data, type = c("lhs", "rhs", "fixef"), combine = FALSE)
+  exo_smm = sparse_model_matrix(
+    exo,
+    data = data,
+    type = c("lhs", "rhs", "fixef"),
+    combine = FALSE
+  )
   # T, Z, and IV_FE
-  endo_smm = sparse_model_matrix(endo, data = data, type = c("lhs", "rhs", "fixef"), combine = FALSE)
+  endo_smm = sparse_model_matrix(
+    endo,
+    data = data,
+    type = c("lhs", "rhs", "fixef"),
+    combine = FALSE
+  )
 
   # Correctly drop  NAs
   # I've checked that this is robust to exo_na and endo_na being NULL
@@ -83,17 +106,20 @@ manyiv <- function(
     yet_to_remove_endo = setdiff(exo_na, exo_na)
     if (length(yet_to_remove_endo) > 0) {
       to_remove_endo = which(remaining_rows_endo %in% (-1 * yet_to_remove_endo))
-      endo_smm = lapply(endo_smm, function(x) x[-to_remove_endo, , drop = FALSE])
+      endo_smm = lapply(
+        endo_smm,
+        function(x) x[-to_remove_endo, , drop = FALSE]
+      )
     }
   }
-  
+
   # Define matrices
   if (!is.null(cluster)) {
     if (inherits(cluster, "formula")) cluster = as.character(cluster)[2]
     cl = data[[cluster]]
     if (!is.null(to_remove)) cl[to_remove]
   }
-  
+
   y = as.matrix(exo_smm$lhs)
   W = as.matrix(exo_smm$rhs)
   W_FE = exo_smm$fixef
@@ -117,7 +143,6 @@ manyiv <- function(
     }
   }
 
-
   if (!is.null(W_FE)) {
     data_FE = stats::model.matrix(exo, type = "fixef")
     yp = drop_0_cols(fixest::demean(y, data_FE))
@@ -138,27 +163,25 @@ manyiv <- function(
     yq = yp
     Tq = Tp
     Wq = Wp
-    
+
     if (is.null(W_FE)) {
       Zq = Z
     }
   }
 
-
-  # TODO: 
+  # TODO:
   # Drop collinear from instruments
   # Get degree of freedom adjustments
   n = nrow(W)
   K = ncol(Z)
-  L = ncol(W) 
+  L = ncol(W)
   if (!is.null(W_FE)) L = L + ncol(W_FE)
   get_dof <- function(exo, endo, W, W_FE, Z, Z_FE) {
-
   }
 
   # Zq = drop_0_cols(Zq)
   # Z = drop_0_cols(Z)
-  # Z = drop_0_cols(Z) 
+  # Z = drop_0_cols(Z)
   # print(K)
   # print(L)
   # print(n)
@@ -171,42 +194,46 @@ manyiv <- function(
   # [y_⊥ T_⊥] = M_W M_D [y T]
   MWD_yT <- annihilator(Wq, cbind(yq, Tq))
   # Z_⊥ = M_W M_D Z
-  MWD_Z <- annihilator(Wq, Zq) 
+  MWD_Z <- annihilator(Wq, Zq)
 
   # [y_⊥ T_⊥]' [y_⊥ T_⊥] = [y T]' M_W [y T]
   YY <- Matrix::crossprod(MW_yT)
 
   # [solve(Z_⊥, y_⊥) solve(Z_⊥, T_⊥)] = Reduced form and First stage
-  RFS = Matrix::solve(Matrix::crossprod(MWD_Z), Matrix::crossprod(MWD_Z, MWD_yT))
+  RFS = Matrix::solve(
+    Matrix::crossprod(MWD_Z),
+    Matrix::crossprod(MWD_Z, MWD_yT)
+  )
 
   # H_{Z_⊥} [y_⊥ T_⊥]
   # TODO: check ncol(Zq) > 0
-  HZ_yT = (MWD_Z %*% RFS) + MW_yT - MWD_yT 
+  HZ_yT = (MWD_Z %*% RFS) + MW_yT - MWD_yT
 
   # [y_⊥ T_⊥]' H_{Z_⊥} [y_⊥ T_⊥]
   YPY <- Matrix::crossprod(MW_yT, HZ_yT)
   # [y_⊥ T_⊥]' M_{Z_⊥} [y_⊥ T_⊥]
-  YMY <- YY - YPY 
+  YMY <- YY - YPY
 
   ## k-class: OLS, TSLS, LIML, MBTLS -------------------------------------------
 
   # Note: These are all coded as
-  # 
+  #
   #     (T_⊥' (I - k W_{Z_⊥}) y_⊥) / (T_⊥' (I - k W_{Z_⊥}) T_⊥)
-  # 
+  #
   # So different values of k give different estimands.
-  # 
+  #
   # - k = 0 -> YY[1, 2]  / YY[2, 2]  = (y_⊥' T_⊥) / (T_⊥' T_⊥)
   # - k = 1 -> YPY[1, 2] / YPY[2, 2] = (y_⊥' H_{Z_⊥} T_⊥) / (T_⊥' H_{Z_⊥} T_⊥)
   # - The other two give liml and mbtsls
 
   k <- c(
-    0, 1, 
-    min(eigen(mrsolve(YMY, YY))$values), 
+    0,
+    1,
+    min(eigen(mrsolve(YMY, YY))$values),
     (1 - L / n) / (1 - (K - 1) / n - L / n)
   )
-  beta_k <- 
-    (YY[1, 2] - k * YMY[1, 2]) / 
+  beta_k <-
+    (YY[1, 2] - k * YMY[1, 2]) /
     (YY[2, 2] - k * YMY[2, 2])
 
   # Data Check: Match Stata
@@ -231,7 +258,7 @@ manyiv <- function(
   iIDZW <- 1 / (1 - Matrix::diag(DZW))
   IDZW = (Matrix::Diagonal(nrow(DZW)) - DZW)
 
-  # JIVE and UJIVE 
+  # JIVE and UJIVE
   hatTjive <- (T - iIDW * annihilator(Wp, Tp))
   hatTujive <- T - iIDZW * annihilator(ZW, Tq)
   hatPujive <- hatTujive - hatTjive
@@ -240,30 +267,28 @@ manyiv <- function(
     hatPjive <- fixest::demean(hatPjive, data_FE)
   }
 
-
-
   ## Store point estimates -----------------------------------------------------
 
   beta_labels <- c(
-    'OLS', 
-    'TSLS', 
-    'LIML', 
-    'MBTSLS', 
-    'JIVE', 
-    'UJIVE', 
+    'OLS',
+    'TSLS',
+    'LIML',
+    'MBTSLS',
+    'JIVE',
+    'UJIVE',
     'RTSLS'
   )
   beta <- c(
     # OLS, TSLS, LIML, MBTSLS
     beta_k,
-    # JIVE 
+    # JIVE
     as.numeric(
       (Matrix::t(hatPjive) %*% y) / (Matrix::t(hatPjive) %*% T)
     ),
     # UJIVE
     as.numeric(
       (Matrix::t(hatPujive) %*% y) / (Matrix::t(hatPujive) %*% T)
-    ), 
+    ),
     # RTSLS
     YPY[1, 1] / YPY[1, 2]
   )
@@ -291,35 +316,42 @@ manyiv <- function(
 
   epsilon = get_epsilon(beta[1:6], MW_yT)
   se[1, 1] = sqrt(
-    (Matrix::crossprod(epsilon[, 1]) / n) / 
-    as.numeric(Matrix::crossprod(MW_yT[, 2, drop = FALSE]))
+    (Matrix::crossprod(epsilon[, 1]) / n) /
+      as.numeric(Matrix::crossprod(MW_yT[, 2, drop = FALSE]))
   )
   se[1, 2] = sqrt(
-    (Matrix::crossprod(epsilon[, 2]) / n) / 
-    YPY[2, 2]
+    (Matrix::crossprod(epsilon[, 2]) / n) /
+      YPY[2, 2]
   )
   se[1, 3] = sqrt(
-    (Matrix::crossprod(epsilon[, 3]) / n) / 
-    YPY[2, 2]
+    (Matrix::crossprod(epsilon[, 3]) / n) /
+      YPY[2, 2]
   )
   se[1, 4] = sqrt(
-    (Matrix::crossprod(epsilon[, 4]) / n) / 
-    YPY[2, 2]
+    (Matrix::crossprod(epsilon[, 4]) / n) /
+      YPY[2, 2]
   )
   se[1, 5] = sqrt(
-    (Matrix::crossprod(epsilon[, 5]) / n) * 
-    as.numeric(Matrix::crossprod(hatPjive)) / 
-    as.numeric(Matrix::crossprod(hatPjive, T))^2
+    (Matrix::crossprod(epsilon[, 5]) / n) *
+      as.numeric(Matrix::crossprod(hatPjive)) /
+      as.numeric(Matrix::crossprod(hatPjive, T))^2
   )
   se[1, 6] = sqrt(
-    (Matrix::crossprod(epsilon[, 6]) / n) * 
-    as.numeric(Matrix::crossprod(hatPujive)) / 
-    as.numeric(Matrix::crossprod(hatPujive, T))^2
+    (Matrix::crossprod(epsilon[, 6]) / n) *
+      as.numeric(Matrix::crossprod(hatPujive)) /
+      as.numeric(Matrix::crossprod(hatPujive, T))^2
   )
 
   ## Heteroskedastic -----------------------------------------------------------
 
-  hatP = cbind(MW_yT[, 2, drop = FALSE], HZ_yT[, 2], HZ_yT[, 2], HZ_yT[, 2], hatPjive, hatPujive)
+  hatP = cbind(
+    MW_yT[, 2, drop = FALSE],
+    HZ_yT[, 2],
+    HZ_yT[, 2],
+    HZ_yT[, 2],
+    hatPjive,
+    hatPujive
+  )
 
   se[2, 1:6] = as.numeric(
     sqrt(Matrix::colSums((epsilon * hatP)^2)) / Matrix::crossprod(T, hatP)
@@ -359,40 +391,43 @@ manyiv <- function(
 
   helper_tsolve <- function(X, Y) {
     Matrix::t(Matrix::solve(
-      Y %*% Matrix::t(Y), 
+      Y %*% Matrix::t(Y),
       Y %*% Matrix::t(X)
     ))
   }
   X = Matrix::tcrossprod(a)
   Y = as.numeric(helper_tsolve(t(a), Sp) %*% a)
   Z = lamre * 1 / Y^2 * as.matrix(Matrix::colSums(X * Y), ncol = 1)
-  Omre = 
-    (n - K - L) * Sp / (n - L) + 
+  Omre =
+    (n - K - L) *
+    Sp /
+    (n - L) +
     n / (n - L) * apply(S, 2, function(col) col - Z)
 
   Omre
 
   Qs = as.numeric(
-    Matrix::crossprod(b, S) %*% b / 
-    Matrix::crossprod(b, Omre) %*% b
+    Matrix::crossprod(b, S) %*% b / Matrix::crossprod(b, Omre) %*% b
   )
   c = lamre * Qs / ((1 - L / n) * (K / n + lamre))
 
   se[4, 3] = as.numeric(sqrt(
-    -1 * as.numeric(Matrix::crossprod(b, Omre) %*% b) / 
-    (n * lamre) * (lamre + K / n) /
-    (
-      Qs * Omre[2, 2] - S[2, 2] + 
-      c / (1 - c) * Qs / (mrsolve(Omre, Matrix::t(a)) %*% a)
-    )
+    -1 *
+      as.numeric(Matrix::crossprod(b, Omre) %*% b) /
+      (n * lamre) *
+      (lamre + K / n) /
+      (Qs *
+        Omre[2, 2] -
+        S[2, 2] +
+        c / (1 - c) * Qs / (mrsolve(Omre, Matrix::t(a)) %*% a))
   ))
 
   # mbtsls, using maximum URE likelihood plug-in estimator
   b = as.matrix(c(1, -1 * beta[4]), ncol = 1)
-  Lam11 = max(0, Matrix::t(b) %*% (S - K/n * Sp) %*% b)
+  Lam11 = max(0, Matrix::t(b) %*% (S - K / n * Sp) %*% b)
 
   if (mmin > K / n) {
-    Lam22 = S[2, 2] - K/n * Sp[2, 2]
+    Lam22 = S[2, 2] - K / n * Sp[2, 2]
     Omure = Sp
   } else {
     Lam22 = as.numeric(lamre / helper_tsolve(t(a), Omre) %*% a)
@@ -403,8 +438,10 @@ manyiv <- function(
   Sig = Matrix::crossprod(Gamma, Omure) %*% Gamma
   h = ((1 - L / n) * (K - 1) / n) / (1 - L / n - (K - 1) / n)
 
-  Vvalid = Sig[1,1] / Lam22 + h * (Sig[1,1] * Sig[2,2] + Sig[1,2]^2) / Lam22^2
-  Vinvalid = Vvalid + (Lam11 * Omure[2,2] + Lam11 * Lam22 * n/K) / Lam22^2
+  Vvalid = Sig[1, 1] /
+    Lam22 +
+    h * (Sig[1, 1] * Sig[2, 2] + Sig[1, 2]^2) / Lam22^2
+  Vinvalid = Vvalid + (Lam11 * Omure[2, 2] + Lam11 * Lam22 * n / K) / Lam22^2
 
   se[4, 4] = sqrt(Vvalid / n)
   se[5, 4] = sqrt(Vinvalid / n)
@@ -432,14 +469,17 @@ manyiv <- function(
     pvalue[1] = 1 - stats::pchisq(overid[1], K - 1)
 
     overid[2] = n * mmin
-    pvalue[2] = 1 - stats::pnorm(
-      sqrt((n - K - L) / (n - L)) *
-      stats::qnorm(stats::pchisq(overid[2], K - 1))
-    )
+    pvalue[2] = 1 -
+      stats::pnorm(
+        sqrt((n - K - L) / (n - L)) *
+          stats::qnorm(stats::pchisq(overid[2], K - 1))
+      )
   }
 
   stats = list(
-    F = F, Omega = Sp, Xi = Xi, 
+    F = F,
+    Omega = Sp,
+    Xi = Xi,
     Sargan = c(overid[1], pvalue[1]),
     CD = c(overid[2], pvalue[2])
   )
@@ -460,35 +500,8 @@ manyiv <- function(
     clustered = !is.null(cluster)
   )
   class(out) <- "manyiv_est"
-  
+
   return(out)
-}
-
-print.manyiv_est <- function(out) {
-  if (out$clustered) {
-    se = out$se[3, ]
-    se_label = "Clustered SE"
-  } else {
-    se = out$se[2, ]
-    se_label = "Robust SE"
-  }
-  beta = out$beta
-  tstat = beta / se
-  pval = 2 * (1 - stats::pnorm(abs(tstat)))
-
-  est = data.frame(
-    Estimator = names(beta),
-    Estimate = sprintf("%.4f", beta)
-  )
-  se = c(sprintf("(%.3f)", se[1:6]), "(.)")
-  est[[se_label]] = se
-
-  # Print out nice table to console
-  print(est)
-  stringmagic::cat_magic(
-    "\n{n ? n} observations, {n ? K} instruments, {n ? L} covariates, first-stage F = {%0.3f ? F}\n", 
-    n = out$n, L = out$L, K = out$K, F = out$F
-  )
 }
 
 

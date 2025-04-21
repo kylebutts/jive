@@ -1,18 +1,18 @@
 #' Estimate jackknife IV regression from Angrist, Imbens, and Krueger (1999)
-#' 
-#' @description 
-#' Estimate JIVE regression following Angrist, Imbens, and Krueger (1999). 
-#' Details can be found in 
+#'
+#' @description
+#' Estimate JIVE regression following Angrist, Imbens, and Krueger (1999).
+#' Details can be found in
 #' https://www.princeton.edu/~mkolesar/papers/late_estimation.pdf.
-#' 
+#'
 #' @param data Data.frame
 #' @param formula Formula. following the syntax of the `fixest` package. In short, `y ~ exo | exo_FEs | endo ~ instrument | instrument_FEs`.
 #' @param cluster Character or formula. The cluster variable. For non-clustered robust standard errors, set to NULL.
 #' @param ssc Logical. Should a small sample adjustment be made? Default is `TRUE`.
 #' @param lo_cluster Logical. Should leave-out cluster be used for estimation? Default is `TRUE` if `cluster` is not NULL.
-#' 
+#'
 #' @seealso [ijive()] for improved JIVE estimation and [ujive()] for unbiased JIVE estimation
-#' 
+#'
 #' @return An object of class `jive_est` that contains the results. It contains the following information:
 #' \item{beta}{Coefficient on the endogenous variable}
 #' \item{se}{Standard error for the coefficient on the endogenous variable}
@@ -26,12 +26,15 @@
 #' \item{n}{The number of observations used.}
 #' \item{n_instruments}{The number of non-collinear instruments included.}
 #' \item{n_covariates}{The number of non-collinear covariates included.}
-#' 
+#'
 #' @export
 jive <- function(
-  formula, data, cluster = NULL, ssc = FALSE, lo_cluster = FALSE
-) { 
-  
+  formula,
+  data,
+  cluster = NULL,
+  ssc = FALSE,
+  lo_cluster = FALSE
+) {
   # `formula` comes first, but flip if needed
   if (inherits(formula, "data.frame")) {
     tmp = formula
@@ -62,7 +65,12 @@ jive <- function(
   #   obs_to_keep = est_ZW$obs_selection$obsRemoved
   # }
   est_ZW = fixest::feols(
-    fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~ .[fml_parts$W_lin] + .[fml_parts$Z_lin] | .[fml_parts$W_FE] + .[fml_parts$Z_FE]), 
+    fixest::xpd(
+      c(.[fml_parts$y_fml], .[fml_parts$T_fml]) ~
+        .[fml_parts$W_lin] +
+          .[fml_parts$Z_lin] |
+          .[fml_parts$W_FE] + .[fml_parts$Z_FE]
+    ),
     data = data
   )
 
@@ -71,7 +79,7 @@ jive <- function(
   n = est_ZW[[2]]$nobs
   In = Matrix::Diagonal(n)
   H_ZW_T = stats::predict(est_ZW[[2]])
-  if (lo_cluster == TRUE) { 
+  if (lo_cluster == TRUE) {
     D_ZW = block_diag_hatvalues(est_ZW[[2]], cl)
   } else {
     D_ZW = block_diag_hatvalues(est_ZW[[2]])
@@ -81,7 +89,10 @@ jive <- function(
   That = Matrix::solve(In - D_ZW, H_ZW_T - (D_ZW %*% T))
   data$That = as.numeric(That)
   est_W = fixest::feols(
-    fixest::xpd(c(.[fml_parts$y_fml], .[fml_parts$T_fml], That) ~ .[fml_parts$W_lin] | .[fml_parts$W_FE]), 
+    fixest::xpd(
+      c(.[fml_parts$y_fml], .[fml_parts$T_fml], That) ~
+        .[fml_parts$W_lin] | .[fml_parts$W_FE]
+    ),
     data = data
   )
   Phat = stats::resid(est_W[[3]])
@@ -91,13 +102,14 @@ jive <- function(
   est = Matrix::crossprod(Phat, Y) / Matrix::crossprod(Phat, T)
 
   # Standard error -------------------------------------------------------------
-  epsilon = stats::resid(est_W[[1]]) - stats::resid(est_W[[2]]) * as.numeric(est)
-  
+  epsilon = stats::resid(est_W[[1]]) -
+    stats::resid(est_W[[2]]) * as.numeric(est)
+
   if (is.null(cluster)) {
     se = sqrt(sum(Phat^2 * epsilon^2)) / sum(Phat * T)
   } else {
     se_cl = lapply(
-      split(1:length(cl), cl), 
+      split(1:length(cl), cl),
       function(cl_idx) {
         sum((epsilon[cl_idx] * Phat[cl_idx])^2)
       }
@@ -106,7 +118,7 @@ jive <- function(
   }
 
   # Small-sample correction
-  L = est_W[[2]]$nparams 
+  L = est_W[[2]]$nparams
   K = est_ZW[[2]]$nparams - L
   if (!is.null(cluster)) G = max(cl)
   if (ssc) {
@@ -134,7 +146,7 @@ jive <- function(
 
   # Estimate of the covariance matrix of reduced-form errors
   Omega = Sp
-  
+
   # Estimate of the covariance matrix of the reduced form coefficients
   Xi = YPY / n - (K / n) * Sp
 
@@ -146,20 +158,28 @@ jive <- function(
     Sargan$pvalue = 1 - stats::pchisq(Sargan$statistic, K - 1)
 
     CD$statistic = n * mmin
-    CD$pvalue = 1 - stats::pnorm(
-      sqrt((n - K - L) / (n - L)) *
-      stats::qnorm(stats::pchisq(CD$statistic, K - 1))
-    )
+    CD$pvalue = 1 -
+      stats::pnorm(
+        sqrt((n - K - L) / (n - L)) *
+          stats::qnorm(stats::pchisq(CD$statistic, K - 1))
+      )
   }
 
   beta = as.numeric(est)
   names(beta) <- all.vars(fml_parts$T_fml)[1]
   names(se) = all.vars(fml_parts$T_fml)[1]
   out = list(
-    beta = beta, se = se,
-    F = F, Omega = Omega, Xi = Xi, Sargan = Sargan, CD = CD,
+    beta = beta,
+    se = se,
+    F = F,
+    Omega = Omega,
+    Xi = Xi,
+    Sargan = Sargan,
+    CD = CD,
     clustered = !is.null(cluster),
-    n = n, n_instruments = K, n_covariates = L
+    n = n,
+    n_instruments = K,
+    n_covariates = L
   )
   if (!is.null(cluster)) out$n_cluster = G
   class(out) <- c("JIVE", "jive_est")

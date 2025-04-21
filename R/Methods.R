@@ -38,11 +38,56 @@ print.jive_est <- function(x, ...) {
   }
 }
 
+#' A print method for `manyiv_est` objects
+#'
+#' @param x A `manyiv_est` object from `manyiv`
+#' @param ... Unused
+#'
+#' @export
+print.manyiv_est  <- function(x, ...) {
+  if (x$clustered) {
+    se = x$se[3, ]
+    se_label = "Clustered SE"
+  } else {
+    se = x$se[2, ]
+    se_label = "Robust SE"
+  }
+  beta = x$beta
+  tstat = beta / se
+  pval = 2 * (1 - stats::pnorm(abs(tstat)))
+
+  est = data.frame(
+    Estimator = names(beta),
+    Estimate = sprintf("%.4f", beta)
+  )
+  se = c(sprintf("(%.3f)", se[1:6]), "(.)")
+  est[[se_label]] = se
+
+  # Print out nice table to console
+  print(est)
+  stringmagic::cat_magic(
+    "\n{n ? n} observations, {n ? K} instruments, {n ? L} covariates, first-stage F = {%0.3f ? F}\n",
+    n = x$n,
+    L = x$L,
+    K = x$K,
+    F = x$F
+  )
+  return(NULL)
+}
+
 #' A print method for `jive_est` objects
 #' @param object A `jive_est` object from `jive`/`ujive`/`ijive`
 #' @param ... Unused
 #' @export
 summary.jive_est <- function(object, ...) {
+  print(object)
+}
+
+#' A print method for `manyiv_est` objects
+#' @param object A `manyiv_est` object from `manyiv`
+#' @param ... Unused
+#' @export
+summary.manyiv_est <- function(object, ...) {
   print(object)
 }
 

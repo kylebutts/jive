@@ -1,24 +1,25 @@
 #' Block Diagonal Hat Matrix
-#' 
-#' Calculates the block diagonal hat matrix for a fixest model where the blocks 
-#' correspond to clusters (cl_i == cl_j) otherwise the (i,j) element is 
+#'
+#' Calculates the block diagonal hat matrix for a fixest model where the blocks
+#' correspond to clusters (cl_i == cl_j) otherwise the (i,j) element is
 #' zeroed out. Note the data doesn't have to be sorted for this.
-#' 
+#'
 #' @param model A `fixest` model object.
-#' @param cl A vector of cluster membership with the same length as the number 
+#' @param cl A vector of cluster membership with the same length as the number
 #' of observations used in `model`.
-#' 
+#'
 #' @return A `nobs` by `nobs` sparse matrix of the block diagonal hat matrix.
-#' 
+#'
 #' @export
 block_diag_hatvalues <- function(model, cl = NULL) {
-  
   if (!is.null(cl)) cl_split <- split(1:model$nobs, cl)
   n <- model$nobs
 
   # Only works for feglm/feols objects
   if (isTRUE(model$lean)) {
-    stop("The method 'hatvalues.fixest' cannot be applied to 'lean' fixest objects. Please re-estimate with 'lean = FALSE'.")
+    stop(
+      "The method 'hatvalues.fixest' cannot be applied to 'lean' fixest objects. Please re-estimate with 'lean = FALSE'."
+    )
   }
 
   if (!is.null(model$iv)) {
@@ -42,7 +43,8 @@ block_diag_hatvalues <- function(model, cl = NULL) {
   mats$fixef <- fixest::sparse_model_matrix(
     model,
     type = c("fixef"),
-    collin.rm = TRUE, na.rm = TRUE
+    collin.rm = TRUE,
+    na.rm = TRUE
   )
 
   # Check for slope.vars and move to seperate matrix
@@ -95,12 +97,12 @@ block_diag_hatvalues <- function(model, cl = NULL) {
     mats$rhs <- fixest::sparse_model_matrix(
       model,
       type = c("rhs"),
-      collin.rm = TRUE, na.rm = TRUE
+      collin.rm = TRUE,
+      na.rm = TRUE
     )
 
     if (!is.null(weights)) mats$rhs <- mats$rhs * sqrt(weights)
   }
-
 
   # Caclulate P_ii's
   if (!is.null(mats$fixef)) {
@@ -115,7 +117,8 @@ block_diag_hatvalues <- function(model, cl = NULL) {
       # Cluster-by-cluster, solve U' X_c
       P_fixef_list <- lapply(cl_split, function(cl_idx) {
         Z_cl <- Matrix::solve(
-          Matrix::t(U), Matrix::t(mats$fixef)[, cl_idx, drop = FALSE]
+          Matrix::t(U),
+          Matrix::t(mats$fixef)[, cl_idx, drop = FALSE]
         )
         P_cl <- Matrix::crossprod(Z_cl)
 
@@ -142,7 +145,8 @@ block_diag_hatvalues <- function(model, cl = NULL) {
       )
       # P_ii = diag(X %*% Z) = rowSums(X * Z)
       P_list$slope_vars <- Matrix::Diagonal(
-        n, Matrix::rowSums(mats$slope_vars * Matrix::t(Z))
+        n,
+        Matrix::rowSums(mats$slope_vars * Matrix::t(Z))
       )
     } else {
       tSlSl <- Matrix::crossprod(mats$slope_vars)
@@ -173,7 +177,8 @@ block_diag_hatvalues <- function(model, cl = NULL) {
 
     if (is.null(cl)) {
       P_list$rhs <- Matrix::Diagonal(
-        n, Matrix::rowSums(mats$rhs * Matrix::t(tXXinv %*% Matrix::t(mats$rhs)))
+        n,
+        Matrix::rowSums(mats$rhs * Matrix::t(tXXinv %*% Matrix::t(mats$rhs)))
       )
     } else {
       P_rhs_list <- lapply(cl_split, function(cl_idx) {
@@ -201,6 +206,6 @@ block_diag_hatvalues <- function(model, cl = NULL) {
   P <- Reduce("+", P_list)
   # For efficient operations, mark this (correctly) as a sparse matrix
   if (!is.null(cl)) P <- methods::as(P, "symmetricMatrix")
-  
+
   return(P)
 }

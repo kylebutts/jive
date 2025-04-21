@@ -9,7 +9,8 @@ ijive(
   data,
   cluster = NULL,
   ssc = FALSE,
-  lo_cluster = !is.null(cluster)
+  lo_cluster = !is.null(cluster),
+  return_leniency = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ ijive(
 \item{ssc}{Logical. Should a small sample adjustment be made? Default is \code{TRUE}.}
 
 \item{lo_cluster}{Logical. Should leave-out cluster be used for estimation? Default is \code{TRUE} if \code{cluster} is not NULL.}
+
+\item{return_leniency}{Logical. Should the leave-out fitted value from the first-stage be returned? Default is \code{FALSE}.}
 }
 \value{
 An object of class \code{jive_est} that contains the results. It contains the following information:
@@ -37,6 +40,7 @@ An object of class \code{jive_est} that contains the results. It contains the fo
 \item{n}{The number of observations used.}
 \item{n_instruments}{The number of non-collinear instruments included.}
 \item{n_covariates}{The number of non-collinear covariates included.}
+\item{That}{Leave-out fitted value from the first-stage. This is the fitted values of M_W * T on M_W * Z. Only returned if \code{return_leniency} is \code{TRUE}.}
 }
 \description{
 Estimate the improved JIVE estimator from Ackerberg and Devereux (2009)
